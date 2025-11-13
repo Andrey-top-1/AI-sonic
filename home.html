@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сонник - Расшифровка ваших снов</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #6d5dfc;
+            --primary-dark: #5b4ce2;
+            --secondary: #8a4fff;
+            --text: #333;
+            --text-light: #666;
+            --bg: #f9f7fe;
+            --card-bg: #ffffff;
+            --user-msg: #e3f2fd;
+            --bot-msg: #f3e5f5;
+            --error: #f44336;
+            --success: #4caf50;
+            --border-radius: 12px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .logo i {
+            font-size: 1.8rem;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 20px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: background 0.3s;
+        }
+
+        nav a:hover, nav a.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid white;
+            color: white;
+        }
+
+        .btn-outline:hover {
+            background-color: white;
+            color: var(--primary);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .section {
+            display: none;
+            padding: 40px 0;
+            min-height: calc(100vh - 80px);
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.2rem;
+            color: var(--primary);
+        }
+
+        /* Auth Section */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.3s;
+        }
+
+        .auth-tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .password-strength {
+            height: 5px;
+            background-color: #eee;
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s;
+        }
+
+        .password-weak {
+            background-color: var(--error);
+            width: 30%;
+        }
+
+        .password-medium {
+            background-color: orange;
+            width: 60%;
+        }
+
+        .password-strong {
+            background-color: var(--success);
+            width: 100%;
+        }
+
+        .error-message {
+            color: var(--error);
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        /* Chat Section */
+        .chat-container {
+            display: flex;
+            height: 70vh;
+            gap: 20px;
+        }
+
+        .chat-history {
+            flex: 1;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .chat-messages {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            position: relative;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--user-msg);
+            border-bottom-right-radius: 0;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background-color: var(--bot-msg);
+            border-bottom-left-radius: 0;
+        }
+
+        .message-text {
+            margin-bottom: 10px;
+        }
+
+        .message-time {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-align: right;
+        }
+
+        .tts-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .input-container {
+            display: flex;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            resize: none;
+            height: 50px;
+        }
+
+        .send-button, .voice-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: background 0.3s;
+        }
+
+        .send-button:hover, .voice-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .voice-button.recording {
+            background-color: var(--error);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Profile Section */
+        .profile-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .profile-sidebar {
+            flex: 1;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+
+        .profile-content {
+            flex: 2;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .user-details h3 {
+            margin-bottom: 5px;
+        }
+
+        .user-details p {
+            color: var(--text-light);
+        }
+
+        .dreams-history {
+            margin-top: 30px;
+        }
+
+        .dreams-list {
+            margin-top: 20px;
+        }
+
+        .dream-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .dream-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .dream-date {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .dream-preview {
+            color: var(--text-light);
+            margin-top: 5px;
+        }
+
+        .dream-detail {
+            display: none;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+        }
+
+        .dream-detail.active {
+            display: block;
+        }
+
+        .chart-container {
+            margin-top: 30px;
+            height: 300px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .chat-container, .profile-container {
+                flex-direction: column;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-moon"></i>
+                    <span>Сонник</span>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="#" class="nav-link active" data-section="chat">Главная</a></li>
+                        <li><a href="#" class="nav-link" data-section="profile">Личный кабинет</a></li>
+                        <li><a href="#" class="nav-link" data-section="about">О проекте</a></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons">
+                    <button class="btn btn-outline btn-small" id="login-btn">Войти</button>
+                    <button class="btn btn-primary btn-small" id="register-btn">Регистрация</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Authentication Section -->
+        <section id="auth-section" class="section">
+            <h2 class="section-title">Войдите в свой аккаунт</h2>
+            <div class="auth-container">
+                <div class="auth-card">
+                    <div class="auth-tabs">
+                        <div class="auth-tab active" data-tab="login">Вход</div>
+                        <div class="auth-tab" data-tab="register">Регистрация</div>
+                    </div>
+                    
+                    <form id="login-form" class="auth-form active">
+                        <div class="form-group">
+                            <label for="login-email">Электронная почта</label>
+                            <input type="email" id="login-email" class="form-control" required>
+                            <div class="error-message" id="login-email-error">Неверный формат email</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Пароль</label>
+                            <input type="password" id="login-password" class="form-control" required>
+                            <div class="error-message" id="login-password-error">Неверный пароль</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Войти</button>
+                    </form>
+                    
+                    <form id="register-form" class="auth-form">
+                        <div class="form-group">
+                            <label for="register-name">Имя</label>
+                            <input type="text" id="register-name" class="form-control" required>
+                            <div class="error-message" id="register-name-error">Имя должно содержать не менее 2 символов</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">Электронная почта</label>
+                            <input type="email" id="register-email" class="form-control" required>
+                            <div class="error-message" id="register-email-error">Неверный формат email</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-birthdate">Дата рождения</label>
+                            <input type="date" id="register-birthdate" class="form-control" required>
+                            <div class="error-message" id="register-birthdate-error">Неверная дата рождения</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Пароль</label>
+                            <input type="password" id="register-password" class="form-control" required>
+                            <div class="password-strength">
+                                <div class="password-strength-bar" id="password-strength-bar"></div>
+                            </div>
+                            <div class="error-message" id="register-password-error">Пароль должен содержать не менее 8 символов, включая цифры и буквы</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Зарегистрироваться</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chat Section -->
+        <section id="chat-section" class="section active">
+            <h2 class="section-title">Расшифровка ваших снов</h2>
+            <div class="chat-container">
+                <div class="chat-history">
+                    <h3>История снов</h3>
+                    <div class="dreams-list" id="chat-dreams-list">
+                        <div class="loading">Загрузка истории...</div>
+                    </div>
+                </div>
+                <div class="chat-messages">
+                    <div class="messages-container" id="messages-container">
+                        <div class="loading">Загрузка диалога...</div>
+                    </div>
+                    <div class="input-container">
+                        <textarea class="message-input" id="message-input" placeholder="Опишите свой сон..."></textarea>
+                        <button class="voice-button" id="voice-button">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <button class="send-button" id="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile-section" class="section">
+            <h2 class="section-title">Личный кабинет</h2>
+            <div class="profile-container">
+                <div class="profile-sidebar">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <h3 id="user-name">Загрузка...</h3>
+                            <p id="user-email">Загрузка...</p>
+                            <p id="user-birthdate">Загрузка...</p>
+                        </div>
+                    </div>
+                    <div class="dreams-history">
+                        <h3>История снов</h3>
+                        <div class="dreams-list" id="profile-dreams-list">
+                            <div class="loading">Загрузка истории...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-content">
+                    <div class="dream-detail active" id="dream-detail-default">
+                        <h3>Выберите сон для просмотра деталей</h3>
+                        <p>Нажмите на любой сон из списка слева, чтобы увидеть его полное описание и интерпретацию.</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="dream-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about-section" class="section">
+            <h2 class="section-title">О проекте "Сонник"</h2>
+            <div style="max-width: 800px; margin: 0 auto; background-color: var(--card-bg); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                <p>Сонник - это современная платформа для анализа и интерпретации снов с использованием искусственного интеллекта.</p>
+                <h3 style="margin-top: 20px; color: var(--primary);">Наши возможности:</h3>
+                <ul style="margin-top: 15px; margin-left: 20px;">
+                    <li>Расшифровка символов и образов из ваших снов</li>
+                    <li>Голосовой ввод описания сна</li>
+                    <li>Голосовое воспроизведение интерпретаций</li>
+                    <li>Визуализация частых тем и символов в ваших снах</li>
+                    <li>История всех ваших снов и их интерпретаций</li>
+                </ul>
+                <h3 style="margin-top: 20px; color: var(--primary);">Как это работает?</h3>
+                <p style="margin-top: 15px;">Мы используем передовые технологии искусственного интеллекта и интеграцию с платформой n8n для обработки данных и предоставления точных интерпретаций ваших снов.</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Конфигурация API endpoints (ЗАМЕНИТЕ НА ВАШИ URL-адреса n8n)
+        const API_CONFIG = {
+            baseUrl: 'https://your-n8n-instance.com/webhook', // Замените на ваш URL n8n
+            endpoints: {
+                register: '/register',
+                login: '/login',
+                sendMessage: '/chat',
+                getChatHistory: '/chat-history',
+                getDreams: '/dreams',
+                getDreamDetail: '/dream-detail',
+                getUserProfile: '/user-profile',
+                getAnalytics: '/analytics',
+                voiceToText: '/asr',
+                textToSpeech: '/tts'
+            }
+        };
+
+        // Текущее состояние приложения
+        let currentUser = null;
+        let currentChatId = null;
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        // DOM Elements
+        const authSection = document.getElementById('auth-section');
+        const chatSection = document.getElementById('chat-section');
+        const profileSection = document.getElementById('profile-section');
+        const aboutSection = document.getElementById('about-section');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const authForms = document.querySelectorAll('.auth-form');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const messagesContainer = document.getElementById('messages-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const voiceButton = document.getElementById('voice-button');
+        const passwordInput = document.getElementById('register-password');
+        const passwordStrengthBar = document.getElementById('password-strength-bar');
+        const chatDreamsList = document.getElementById('chat-dreams-list');
+        const profileDreamsList = document.getElementById('profile-dreams-list');
+        const userName = document.getElementById('user-name');
+        const userEmail = document.getElementById('user-email');
+        const userBirthdate = document.getElementById('user-birthdate');
+
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            // Проверяем, авторизован ли пользователь
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                // Если есть токен, пытаемся получить данные пользователя
+                fetchUserProfile();
+            } else {
+                // Если нет токена, показываем форму входа
+                showAuthSection();
+            }
+        });
+
+        // Навигация
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.getAttribute('data-section') + '-section';
+                
+                // Обновляем активную ссылку навигации
+                navLinks.forEach(nav => nav.classList.remove('active'));
+                link.classList.add('active');
+                
+                // Показываем выбранный раздел
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(sectionId).classList.add('active');
+                
+                // Если переходим в профиль и пользователь авторизован, загружаем данные
+                if (sectionId === 'profile-section' && currentUser) {
+                    loadProfileData();
+                }
+            });
+        });
+
+        // Кнопки авторизации
+        loginBtn.addEventListener('click', showAuthSection);
+        registerBtn.addEventListener('click', showAuthSection);
+
+        function showAuthSection() {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            authSection.classList.add('active');
+            
+            // Обновляем навигацию
+            navLinks.forEach(nav => nav.classList.remove('active'));
+        }
+
+        // Вкладки авторизации
+        authTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+                
+                // Обновляем активную вкладку
+                authTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Показываем соответствующую форму
+                authForms.forEach(form => form.classList.remove('active'));
+                document.getElementById(`${tabName}-form`).classList.add('active');
+            });
+        });
+
+        // Индикатор сложности пароля
+        passwordInput.addEventListener('input', () => {
+            const password = passwordInput.value;
+            let strength = 0;
+            
+            // Проверка длины пароля
+            if (password.length >= 8) strength += 1;
+            
+            // Проверка на наличие цифр
+            if (/\d/.test(password)) strength += 1;
+            
+            // Проверка на наличие букв
+            if (/[a-zA-Z]/.test(password)) strength += 1;
+            
+            // Проверка на специальные символы
+            if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
+            
+            // Обновляем индикатор сложности
+            passwordStrengthBar.className = 'password-strength-bar';
+            if (strength === 0) {
+                // Ничего не делаем
+            } else if (strength === 1) {
+                passwordStrengthBar.classList.add('password-weak');
+            } else if (strength === 2) {
+                passwordStrengthBar.classList.add('password-medium');
+            } else {
+                passwordStrengthBar.classList.add('password-strong');
+            }
+        });
+
+        // Валидация форм
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            // Простая валидация
+            if (!isValidEmail(email)) {
+                document.getElementById('login-email-error').style.display = 'block';
+                return;
+            } else {
+                document.getElementById('login-email-error').style.display = 'none';
+            }
+            
+            if (password.length < 6) {
+                document.getElementById('login-password-error').style.display = 'block';
+                return;
+            } else {
+                document.getElementById('login-password-error').style.display = 'none';
+            }
+            
+            // Отправка запроса на вход через n8n
+            loginUser(email, password);
+        });
+
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const birthdate = document.getElementById('register-birthdate').value;
+            const password = document.getElementById('register-password').value;
+            
+            // Валидация
+            let isValid = true;
+            
+            if (name.length < 2) {
+                document.getElementById('register-name-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('register-name-error').style.display = 'none';
+            }
+            
+            if (!isValidEmail(email)) {
+                document.getElementById('register-email-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('register-email-error').style.display = 'none';
+            }
+            
+            if (!isValidDate(birthdate)) {
+                document.getElementById('register-birthdate-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('register-birthdate-error').style.display = 'none';
+            }
+            
+            if (password.length < 8 || !/\d/.test(password) || !/[a-zA-Z]/.test(password)) {
+                document.getElementById('register-password-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('register-password-error').style.display = 'none';
+            }
+            
+            if (!isValid) return;
+            
+            // Отправка запроса на регистрацию через n8n
+            registerUser(name, email, birthdate, password);
+        });
+
+        // Функционал чата
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message === '') return;
+            
+            // Добавляем сообщение пользователя
+            addMessage(message, 'user');
+            messageInput.value = '';
+            
+            // Отправляем сообщение на сервер через n8n
+            sendMessageToBot(message);
+        }
+
+        function addMessage(text, sender, timestamp = new Date()) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+            
+            const messageText = document.createElement('div');
+            messageText.classList.add('message-text');
+            messageText.textContent = text;
+            
+            const messageTime = document.createElement('div');
+            messageTime.classList.add('message-time');
+            messageTime.textContent = timestamp.getHours() + ':' + 
+                (timestamp.getMinutes() < 10 ? '0' : '') + timestamp.getMinutes();
+            
+            messageDiv.appendChild(messageText);
+            messageDiv.appendChild(messageTime);
+            
+            if (sender === 'bot') {
+                const ttsButton = document.createElement('button');
+                ttsButton.classList.add('tts-button');
+                ttsButton.innerHTML = '<i class="fas fa-volume-up"></i>';
+                ttsButton.addEventListener('click', () => {
+                    // Вызов TTS через n8n
+                    textToSpeech(text);
+                });
+                messageDiv.insertBefore(ttsButton, messageText);
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Голосовой ввод
+        voiceButton.addEventListener('click', toggleRecording);
+
+        function toggleRecording() {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        function startRecording() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        mediaRecorder = new MediaRecorder(stream);
+                        audioChunks = [];
+                        
+                        mediaRecorder.ondataavailable = event => {
+                            audioChunks.push(event.data);
+                        };
+                        
+                        mediaRecorder.onstop = () => {
+                            // Отправка аудио на сервер через n8n для распознавания речи
+                            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                            voiceToText(audioBlob);
+                        };
+                        
+                        mediaRecorder.start();
+                        isRecording = true;
+                        voiceButton.classList.add('recording');
+                    })
+                    .catch(error => {
+                        console.error('Ошибка доступа к микрофону:', error);
+                        alert('Не удалось получить доступ к микрофону. Пожалуйста, проверьте разрешения.');
+                    });
+            } else {
+                alert('Ваш браузер не поддерживает запись аудио.');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                voiceButton.classList.remove('recording');
+            }
+        }
+
+        // API функции для работы с n8n
+
+        // Регистрация пользователя
+        async function registerUser(name, email, birthdate, password) {
+            try {
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.register, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        birthdate,
+                        password
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка регистрации');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Сохраняем токен и информацию о пользователе
+                    localStorage.setItem('authToken', data.token);
+                    currentUser = data.user;
+                    
+                    // Показываем чат
+                    showChatSection();
+                    loadChatData();
+                    
+                    alert('Регистрация прошла успешно!');
+                } else {
+                    alert('Ошибка регистрации: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка регистрации:', error);
+                alert('Произошла ошибка при регистрации. Попробуйте еще раз.');
+            }
+        }
+
+        // Вход пользователя
+        async function loginUser(email, password) {
+            try {
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.login, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка входа');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Сохраняем токен и информацию о пользователе
+                    localStorage.setItem('authToken', data.token);
+                    currentUser = data.user;
+                    
+                    // Показываем чат
+                    showChatSection();
+                    loadChatData();
+                    
+                    alert('Вход выполнен успешно!');
+                } else {
+                    alert('Ошибка входа: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка входа:', error);
+                alert('Произошла ошибка при входе. Проверьте email и пароль.');
+            }
+        }
+
+        // Получение профиля пользователя
+        async function fetchUserProfile() {
+            try {
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.getUserProfile, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки профиля');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    showChatSection();
+                    loadChatData();
+                } else {
+                    // Если токен недействителен, показываем форму входа
+                    localStorage.removeItem('authToken');
+                    showAuthSection();
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки профиля:', error);
+                localStorage.removeItem('authToken');
+                showAuthSection();
+            }
+        }
+
+        // Отправка сообщения боту
+        async function sendMessageToBot(message) {
+            try {
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.sendMessage, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    },
+                    body: JSON.stringify({
+                        message,
+                        chatId: currentChatId
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка отправки сообщения');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Добавляем ответ бота
+                    addMessage(data.response, 'bot', new Date(data.timestamp));
+                    
+                    // Обновляем историю снов
+                    loadDreamsList();
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка отправки сообщения:', error);
+                alert('Произошла ошибка при отправке сообщения. Попробуйте еще раз.');
+            }
+        }
+
+        // Загрузка истории чата
+        async function loadChatHistory() {
+            try {
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.getChatHistory, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки истории чата');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Очищаем контейнер сообщений
+                    messagesContainer.innerHTML = '';
+                    
+                    // Добавляем сообщения из истории
+                    data.messages.forEach(msg => {
+                        addMessage(
+                            msg.text, 
+                            msg.sender, 
+                            new Date(msg.timestamp)
+                        );
+                    });
+                    
+                    currentChatId = data.chatId;
+                } else {
+                    messagesContainer.innerHTML = '<div class="loading">История чата пуста</div>';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки истории чата:', error);
+                messagesContainer.innerHTML = '<div class="loading">Ошибка загрузки истории чата</div>';
+            }
+        }
+
+        // Загрузка списка снов
+        async function loadDreamsList() {
+            try {
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.getDreams, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки списка снов');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderDreamsList(data.dreams, chatDreamsList);
+                    renderDreamsList(data.dreams, profileDreamsList);
+                } else {
+                    chatDreamsList.innerHTML = '<div class="loading">У вас пока нет записанных снов</div>';
+                    profileDreamsList.innerHTML = '<div class="loading">У вас пока нет записанных снов</div>';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки списка снов:', error);
+                chatDreamsList.innerHTML = '<div class="loading">Ошибка загрузки списка снов</div>';
+                profileDreamsList.innerHTML = '<div class="loading">Ошибка загрузки списка снов</div>';
+            }
+        }
+
+        // Отрисовка списка снов
+        function renderDreamsList(dreams, container) {
+            if (!dreams || dreams.length === 0) {
+                container.innerHTML = '<div class="loading">У вас пока нет записанных снов</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            dreams.forEach(dream => {
+                const dreamItem = document.createElement('div');
+                dreamItem.classList.add('dream-item');
+                dreamItem.setAttribute('data-dream-id', dream.id);
+                
+                const dreamDate = document.createElement('div');
+                dreamDate.classList.add('dream-date');
+                dreamDate.textContent = new Date(dream.date).toLocaleDateString('ru-RU');
+                
+                const dreamPreview = document.createElement('div');
+                dreamPreview.classList.add('dream-preview');
+                dreamPreview.textContent = dream.preview;
+                
+                dreamItem.appendChild(dreamDate);
+                dreamItem.appendChild(dreamPreview);
+                
+                dreamItem.addEventListener('click', () => {
+                    loadDreamDetail(dream.id);
+                });
+                
+                container.appendChild(dreamItem);
+            });
+        }
+
+        // Загрузка деталей сна
+        async function loadDreamDetail(dreamId) {
+            try {
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.getDreamDetail + `?dreamId=${dreamId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки деталей сна');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderDreamDetail(data.dream);
+                } else {
+                    alert('Ошибка загрузки деталей сна: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки деталей сна:', error);
+                alert('Произошла ошибка при загрузке деталей сна.');
+            }
+        }
+
+        // Отрисовка деталей сна
+        function renderDreamDetail(dream) {
+            const dreamDetailContainer = document.querySelector('.profile-content');
+            
+            // Скрываем все детали снов
+            document.querySelectorAll('.dream-detail').forEach(detail => {
+                detail.classList.remove('active');
+            });
+            
+            // Создаем или находим контейнер для деталей этого сна
+            let dreamDetail = document.getElementById(`dream-detail-${dream.id}`);
+            if (!dreamDetail) {
+                dreamDetail = document.createElement('div');
+                dreamDetail.classList.add('dream-detail');
+                dreamDetail.id = `dream-detail-${dream.id}`;
+                dreamDetailContainer.insertBefore(dreamDetail, document.querySelector('.chart-container'));
+            }
+            
+            dreamDetail.innerHTML = `
+                <h3>Сон от ${new Date(dream.date).toLocaleDateString('ru-RU')}</h3>
+                <p><strong>Описание:</strong> ${dream.description}</p>
+                <p><strong>Интерпретация:</strong> ${dream.interpretation}</p>
+                ${dream.symbols ? `<p><strong>Основные символы:</strong> ${dream.symbols.join(', ')}</p>` : ''}
+            `;
+            
+            dreamDetail.classList.add('active');
+        }
+
+        // Загрузка аналитики
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.getAnalytics, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки аналитики');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderAnalyticsChart(data.analytics);
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки аналитики:', error);
+            }
+        }
+
+        // Отрисовка графика аналитики
+        function renderAnalyticsChart(analytics) {
+            const ctx = document.getElementById('dream-chart').getContext('2d');
+            
+            if (window.dreamChart instanceof Chart) {
+                window.dreamChart.destroy();
+            }
+            
+            window.dreamChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: analytics.labels || ['Полет', 'Вода', 'Животные', 'Погоня', 'Дом'],
+                    datasets: [{
+                        label: 'Частота тем в снах',
+                        data: analytics.data || [12, 8, 6, 5, 4],
+                        backgroundColor: [
+                            'rgba(109, 93, 252, 0.7)',
+                            'rgba(138, 79, 255, 0.7)',
+                            'rgba(156, 39, 176, 0.7)',
+                            'rgba(103, 58, 183, 0.7)',
+                            'rgba(63, 81, 181, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(109, 93, 252, 1)',
+                            'rgba(138, 79, 255, 1)',
+                            'rgba(156, 39, 176, 1)',
+                            'rgba(103, 58, 183, 1)',
+                            'rgba(63, 81, 181, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Количество упоминаний'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Темы снов'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Распознавание речи (ASR)
+        async function voiceToText(audioBlob) {
+            try {
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.wav');
+                
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.voiceToText, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка распознавания речи');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Вставляем распознанный текст в поле ввода
+                    messageInput.value = data.text;
+                } else {
+                    alert('Ошибка распознавания речи: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка распознавания речи:', error);
+                alert('Произошла ошибка при распознавании речи. Попробуйте еще раз.');
+            }
+        }
+
+        // Озвучивание текста (TTS)
+        async function textToSpeech(text) {
+            try {
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.textToSpeech, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    },
+                    body: JSON.stringify({ text })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка озвучивания текста');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Воспроизведение аудио
+                    const audio = new Audio(data.audioUrl);
+                    audio.play();
+                } else {
+                    alert('Ошибка озвучивания текста: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка озвучивания текста:', error);
+                alert('Произошла ошибка при озвучивании текста.');
+            }
+        }
+
+        // Вспомогательные функции
+        function showChatSection() {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            chatSection.classList.add('active');
+            
+            // Обновляем навигацию
+            navLinks.forEach(nav => nav.classList.remove('active'));
+            document.querySelector('[data-section="chat"]').classList.add('active');
+            
+            // Обновляем кнопки авторизации
+            loginBtn.textContent = 'Выйти';
+            registerBtn.style.display = 'none';
+            
+            loginBtn.onclick = () => {
+                localStorage.removeItem('authToken');
+                currentUser = null;
+                loginBtn.textContent = 'Войти';
+                registerBtn.style.display = 'block';
+                showAuthSection();
+            };
+        }
+
+        function loadChatData() {
+            loadChatHistory();
+            loadDreamsList();
+        }
+
+        function loadProfileData() {
+            if (currentUser) {
+                userName.textContent = currentUser.name;
+                userEmail.textContent = currentUser.email;
+                userBirthdate.textContent = `Родился: ${new Date(currentUser.birthdate).toLocaleDateString('ru-RU')}`;
+            }
+            
+            loadDreamsList();
+            loadAnalytics();
+        }
+
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function isValidDate(dateString) {
+            const date = new Date(dateString);
+            return !isNaN(date.getTime());
+        }
+    </script>
+</body>
+</html>
