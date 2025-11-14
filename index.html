@@ -323,14 +323,13 @@
             font-size: 1rem;
         }
 
+        /* 🔴 ИСПРАВЛЕНИЕ: Убрана белая подложка у input-container */
         .input-container {
             display: flex;
-            padding: 20px;
+            padding: 20px 0;
             gap: 10px;
-            background-color: var(--card-bg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
             justify-content: center;
+            background-color: transparent;
         }
 
         .message-input {
@@ -342,6 +341,7 @@
             resize: none;
             height: 50px;
             max-width: 500px;
+            background-color: var(--card-bg);
         }
 
         .send-button, .voice-button {
@@ -629,6 +629,7 @@
                         </div>
                     </div>
                 </div>
+                <!-- 🔴 ИСПРАВЛЕНИЕ: Убрана белая подложка -->
                 <div class="input-container">
                     <textarea class="message-input" id="message-input" placeholder="Опишите свой сон..."></textarea>
                     <button class="voice-button" id="voice-button">
@@ -702,7 +703,6 @@
                 register: '/webhook/register',
                 login: '/webhook/login', 
                 sendMessage: '/webhook/chat',
-                getChatHistory: '/webhook/chat-history',
                 getDreams: '/webhook/dreams',
                 getDreamDetail: '/webhook/dream-detail',
                 getUserProfile: '/webhook/user-profile',
@@ -714,10 +714,12 @@
 
         // Текущее состояние приложения
         let currentUser = null;
-        let currentChatId = null;
         let isRecording = false;
         let mediaRecorder = null;
         let audioChunks = [];
+
+        // 🔴 ИСПРАВЛЕНИЕ: Сохранение сообщений в localStorage
+        const MESSAGE_STORAGE_KEY = 'sonnik_chat_messages';
 
         // DOM Elements
         const authSection = document.getElementById('auth-section');
@@ -758,6 +760,31 @@
             }, 4000);
         }
 
+        // 🔴 ИСПРАВЛЕНИЕ: Сохранение сообщений в localStorage
+        function saveMessageToStorage(message, sender) {
+            const messages = getMessagesFromStorage();
+            messages.push({
+                text: message,
+                sender: sender,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(messages));
+        }
+
+        // 🔴 ИСПРАВЛЕНИЕ: Получение сообщений из localStorage
+        function getMessagesFromStorage() {
+            const messages = localStorage.getItem(MESSAGE_STORAGE_KEY);
+            return messages ? JSON.parse(messages) : [];
+        }
+
+        // 🔴 ИСПРАВЛЕНИЕ: Загрузка сообщений из localStorage
+        function loadMessagesFromStorage() {
+            const messages = getMessagesFromStorage();
+            messages.forEach(msg => {
+                addMessageToDOM(msg.text, msg.sender, new Date(msg.timestamp));
+            });
+        }
+
         // Установка времени приветственного сообщения
         document.getElementById('welcome-time').textContent = new Date().getHours() + ':' + 
             (new Date().getMinutes() < 10 ? '0' : '') + new Date().getMinutes();
@@ -768,6 +795,9 @@
             if (token) {
                 fetchUserProfile();
             }
+            
+            // 🔴 ИСПРАВЛЕНИЕ: Загружаем сообщения из localStorage
+            loadMessagesFromStorage();
         });
 
         // Навигация
@@ -915,13 +945,16 @@
             const message = messageInput.value.trim();
             if (message === '') return;
             
-            addMessage(message, 'user');
+            addMessageToDOM(message, 'user');
+            // 🔴 ИСПРАВЛЕНИЕ: Сохраняем сообщение пользователя
+            saveMessageToStorage(message, 'user');
             messageInput.value = '';
             
             sendMessageToBot(message);
         }
 
-        function addMessage(text, sender, timestamp = new Date()) {
+        // 🔴 ИСПРАВЛЕНИЕ: Разделение функции добавления сообщения
+        function addMessageToDOM(text, sender, timestamp = new Date()) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message');
             messageDiv.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
@@ -1108,7 +1141,7 @@
                 const email = localStorage.getItem('userEmail');
                 const password = localStorage.getItem('userPassword');
                 
-                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.sendMessage, {
+                const response = await fetch(API_CONFIG.baseUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1125,18 +1158,28 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    addMessage(data.response, 'bot', new Date());
+                    addMessageToDOM(data.response, 'bot', new Date());
+                    // 🔴 ИСПРАВЛЕНИЕ: Сохраняем ответ бота
+                    saveMessageToStorage(data.response, 'bot');
                     loadDreamsList();
                 } else {
                     showNotification('Ошибка: ' + data.message, 'error');
+                    // 🔴 ИСПРАВЛЕНИЕ: Добавляем демо-ответ при ошибке
+                    setTimeout(() => {
+                        const demoResponse = "Это демо-ответ. Для работы с ИИ настройте n8n workflow с интеграцией AI.";
+                        addMessageToDOM(demoResponse, 'bot', new Date());
+                        saveMessageToStorage(demoResponse, 'bot');
+                    }, 1000);
                 }
             } catch (error) {
                 console.error('Ошибка отправки сообщения:', error);
                 showNotification('Ошибка отправки сообщения', 'error');
                 
-                // Демо-ответ, если n8n не настроен
+                // 🔴 ИСПРАВЛЕНИЕ: Добавляем демо-ответ при ошибке сети
                 setTimeout(() => {
-                    addMessage("Это демо-ответ. Для работы с ИИ настройте n8n workflow с интеграцией AI.", 'bot', new Date());
+                    const demoResponse = "Это демо-ответ. Для работы с ИИ настройте n8n workflow с интеграцией AI.";
+                    addMessageToDOM(demoResponse, 'bot', new Date());
+                    saveMessageToStorage(demoResponse, 'bot');
                 }, 1000);
             }
         }
