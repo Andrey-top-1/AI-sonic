@@ -4,25 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Сонник - Расшифровка ваших снов</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --primary: #6d5dfc;
-            --primary-dark: #5b4ce2;
-            --secondary: #8a4fff;
-            --text: #333;
-            --text-light: #666;
-            --bg: #f9f7fe;
-            --card-bg: #ffffff;
-            --user-msg: #e3f2fd;
-            --bot-msg: #f3e5f5;
-            --error: #f44336;
-            --success: #4caf50;
-            --border-radius: 12px;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -31,245 +13,28 @@
         }
 
         body {
-            background-color: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
+            background-color: #f9f7fe;
+            color: #333;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 20px;
         }
 
         header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: linear-gradient(135deg, #6d5dfc, #8a4fff);
             color: white;
             padding: 1rem 0;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        .logo i {
-            font-size: 1.8rem;
-        }
-
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 20px;
-        }
-
-        nav a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            padding: 8px 16px;
-            border-radius: 20px;
-            transition: background 0.3s;
-        }
-
-        nav a:hover, nav a.active {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .auth-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-2px);
-        }
-
-        .btn-outline {
-            background-color: transparent;
-            border: 2px solid white;
-            color: white;
-        }
-
-        .btn-outline:hover {
-            background-color: white;
-            color: var(--primary);
-        }
-
-        .btn-small {
-            padding: 8px 16px;
-            font-size: 0.9rem;
-        }
-
-        .section {
-            display: none;
-            padding: 40px 0;
-            min-height: calc(100vh - 80px);
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        .section-title {
             text-align: center;
-            margin-bottom: 40px;
-            font-size: 2.2rem;
-            color: var(--primary);
-        }
-
-        /* Auth Section */
-        .auth-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .auth-card {
-            background-color: var(--card-bg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 40px;
-            width: 100%;
-            max-width: 450px;
-        }
-
-        .auth-tabs {
-            display: flex;
             margin-bottom: 30px;
-            border-bottom: 1px solid #eee;
         }
 
-        .auth-tab {
-            flex: 1;
-            text-align: center;
-            padding: 15px;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--text-light);
-            transition: all 0.3s;
-        }
-
-        .auth-tab.active {
-            color: var(--primary);
-            border-bottom: 3px solid var(--primary);
-        }
-
-        .auth-form {
-            display: none;
-        }
-
-        .auth-form.active {
-            display: block;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            transition: border 0.3s;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary);
-            outline: none;
-        }
-
-        .password-strength {
-            height: 5px;
-            background-color: #eee;
-            border-radius: 5px;
-            margin-top: 5px;
-            overflow: hidden;
-        }
-
-        .password-strength-bar {
-            height: 100%;
-            width: 0;
-            transition: width 0.3s;
-        }
-
-        .password-weak {
-            background-color: var(--error);
-            width: 30%;
-        }
-
-        .password-medium {
-            background-color: orange;
-            width: 60%;
-        }
-
-        .password-strong {
-            background-color: var(--success);
-            width: 100%;
-        }
-
-        .error-message {
-            color: var(--error);
-            font-size: 0.9rem;
-            margin-top: 5px;
-            display: none;
-        }
-
-        /* Chat Section */
         .chat-container {
             display: flex;
             flex-direction: column;
             height: 70vh;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .chat-messages {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            margin-bottom: 20px;
         }
 
         .messages-container {
@@ -279,1159 +44,201 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            background-color: var(--bg);
-            border-radius: var(--border-radius);
+            background-color: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .message {
             max-width: 80%;
             padding: 15px;
-            border-radius: var(--border-radius);
-            position: relative;
+            border-radius: 12px;
         }
 
         .user-message {
             align-self: flex-end;
-            background-color: var(--user-msg);
-            border-bottom-right-radius: 0;
+            background-color: #e3f2fd;
         }
 
         .bot-message {
             align-self: flex-start;
-            background-color: var(--bot-msg);
-            border-bottom-left-radius: 0;
+            background-color: #f3e5f5;
         }
 
-        .message-text {
-            margin-bottom: 10px;
-        }
-
-        .message-time {
-            font-size: 0.8rem;
-            color: var(--text-light);
-            text-align: right;
-        }
-
-        .tts-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            font-size: 1rem;
-        }
-
-        /* Убрана белая подложка */
         .input-container {
             display: flex;
-            padding: 20px 0;
             gap: 10px;
-            justify-content: center;
-            background-color: transparent;
         }
 
         .message-input {
             flex: 1;
             padding: 12px 15px;
             border: 1px solid #ddd;
-            border-radius: var(--border-radius);
+            border-radius: 12px;
             font-size: 1rem;
             resize: none;
             height: 50px;
-            max-width: 500px;
-            background-color: var(--card-bg);
         }
 
-        .send-button, .voice-button {
+        .send-button {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background-color: var(--primary);
+            background-color: #6d5dfc;
             color: white;
             border: none;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-size: 1.2rem;
-            transition: background 0.3s;
-        }
-
-        .send-button:hover, .voice-button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .voice-button.recording {
-            background-color: var(--error);
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        /* Profile Section */
-        .profile-container {
-            display: flex;
-            gap: 20px;
-        }
-
-        .profile-sidebar {
-            flex: 1;
-            background-color: var(--card-bg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 20px;
-        }
-
-        .profile-content {
-            flex: 2;
-            background-color: var(--card-bg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 20px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .user-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background-color: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 2rem;
-        }
-
-        .user-details h3 {
-            margin-bottom: 5px;
-        }
-
-        .user-details p {
-            color: var(--text-light);
-        }
-
-        .dreams-history {
-            margin-top: 30px;
-        }
-
-        .dreams-list {
-            margin-top: 20px;
-        }
-
-        .dream-item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .dream-item:hover {
-            background-color: #f5f5f5;
-        }
-
-        .dream-date {
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        .dream-preview {
-            color: var(--text-light);
-            margin-top: 5px;
-        }
-
-        .dream-detail {
-            display: none;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: var(--border-radius);
-            margin-top: 20px;
-        }
-
-        .dream-detail.active {
-            display: block;
-        }
-
-        .chart-container {
-            margin-top: 30px;
-            height: 300px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: var(--text-light);
-        }
-
-        /* Notification styles */
-        #notification-area {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            max-width: 300px;
         }
 
         .notification {
-            background-color: var(--card-bg);
-            border-left: 4px solid var(--success);
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: white;
             padding: 15px;
-            margin-bottom: 10px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-        }
-
-        .notification.show {
-            transform: translateX(0);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #4caf50;
         }
 
         .notification.error {
-            border-left-color: var(--error);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .chat-container, .profile-container {
-                flex-direction: column;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            nav ul {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .message {
-                max-width: 90%;
-            }
-            
-            .input-container {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .message-input {
-                max-width: 100%;
-            }
+            border-left-color: #f44336;
         }
     </style>
 </head>
 <body>
     <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-moon"></i>
-                    <span>Сонник</span>
-                </div>
-                <nav>
-                    <ul>
-                        <li><a href="#" class="nav-link active" data-section="chat">Главная</a></li>
-                        <li><a href="#" class="nav-link" data-section="profile">Личный кабинет</a></li>
-                        <li><a href="#" class="nav-link" data-section="about">О проекте</a></li>
-                    </ul>
-                </nav>
-                <div class="auth-buttons">
-                    <button class="btn btn-outline btn-small" id="login-btn">Войти</button>
-                    <button class="btn btn-primary btn-small" id="register-btn">Регистрация</button>
-                </div>
-            </div>
-        </div>
+        <h1>Сонник - Расшифровка ваших снов</h1>
     </header>
 
-    <!-- Область для уведомлений -->
-    <div id="notification-area"></div>
-
-    <main class="container">
-        <!-- Authentication Section -->
-        <section id="auth-section" class="section">
-            <h2 class="section-title">Войдите в свой аккаунт</h2>
-            <div class="auth-container">
-                <div class="auth-card">
-                    <div class="auth-tabs">
-                        <div class="auth-tab active" data-tab="login">Вход</div>
-                        <div class="auth-tab" data-tab="register">Регистрация</div>
-                    </div>
-                    
-                    <form id="login-form" class="auth-form active">
-                        <div class="form-group">
-                            <label for="login-email">Электронная почта</label>
-                            <input type="email" id="login-email" class="form-control" required>
-                            <div class="error-message" id="login-email-error">Неверный формат email</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="login-password">Пароль</label>
-                            <input type="password" id="login-password" class="form-control" required>
-                            <div class="error-message" id="login-password-error">Неверный пароль</div>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">Войти</button>
-                    </form>
-                    
-                    <form id="register-form" class="auth-form">
-                        <div class="form-group">
-                            <label for="register-name">Имя</label>
-                            <input type="text" id="register-name" class="form-control" required>
-                            <div class="error-message" id="register-name-error">Имя должно содержать не менее 2 символов</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-email">Электронная почта</label>
-                            <input type="email" id="register-email" class="form-control" required>
-                            <div class="error-message" id="register-email-error">Неверный формат email</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-birthdate">Дата рождения</label>
-                            <input type="date" id="register-birthdate" class="form-control" required>
-                            <div class="error-message" id="register-birthdate-error">Неверная дата рождения</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-password">Пароль</label>
-                            <input type="password" id="register-password" class="form-control" required>
-                            <div class="password-strength">
-                                <div class="password-strength-bar" id="password-strength-bar"></div>
-                            </div>
-                            <div class="error-message" id="register-password-error">Пароль должен содержать не менее 8 символов, включая цифры и буквы</div>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">Зарегистрироваться</button>
-                    </form>
+    <div class="container">
+        <div class="chat-container">
+            <div class="messages-container" id="messages-container">
+                <div class="message bot-message">
+                    Привет! Опиши свой сон, и я помогу его расшифровать.
                 </div>
             </div>
-        </section>
-
-        <!-- Chat Section -->
-        <section id="chat-section" class="section active">
-            <h2 class="section-title">Расшифровка ваших снов</h2>
-            <div class="chat-container">
-                <div class="chat-messages">
-                    <div class="messages-container" id="messages-container">
-                        <div class="message bot-message">
-                            <div class="message-text">
-                                Привет! Я помогу расшифровать твои сны. Опиши, что тебе приснилось, и я дам психологическую интерпретацию.
-                            </div>
-                            <div class="message-time" id="welcome-time"></div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Убрана белая подложка -->
-                <div class="input-container">
-                    <textarea class="message-input" id="message-input" placeholder="Опишите свой сон..."></textarea>
-                    <button class="voice-button" id="voice-button">
-                        <i class="fas fa-microphone"></i>
-                    </button>
-                    <button class="send-button" id="send-button">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
+            <div class="input-container">
+                <textarea class="message-input" id="message-input" placeholder="Опишите свой сон..."></textarea>
+                <button class="send-button" id="send-button">➤</button>
             </div>
-        </section>
-
-        <!-- Profile Section -->
-        <section id="profile-section" class="section">
-            <h2 class="section-title">Личный кабинет</h2>
-            <div class="profile-container">
-                <div class="profile-sidebar">
-                    <div class="user-info">
-                        <div class="user-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="user-details">
-                            <h3 id="user-name">Загрузка...</h3>
-                            <p id="user-email">Загрузка...</p>
-                            <p id="user-birthdate">Загрузка...</p>
-                        </div>
-                    </div>
-                    <div class="dreams-history">
-                        <h3>История снов</h3>
-                        <div class="dreams-list" id="profile-dreams-list">
-                            <div class="loading">Загрузка истории...</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="profile-content">
-                    <div class="dream-detail active" id="dream-detail-default">
-                        <h3>Выберите сон для просмотра деталей</h3>
-                        <p>Нажмите на любой сон из списка слева, чтобы увидеть его полное описание и интерпретацию.</p>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="dream-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- About Section -->
-        <section id="about-section" class="section">
-            <h2 class="section-title">О проекте "Сонник"</h2>
-            <div style="max-width: 800px; margin: 0 auto; background-color: var(--card-bg); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
-                <p>Сонник - это современная платформа для анализа и интерпретации снов с использованием искусственного интеллекта.</p>
-                <h3 style="margin-top: 20px; color: var(--primary);">Наши возможности:</h3>
-                <ul style="margin-top: 15px; margin-left: 20px;">
-                    <li>Расшифровка символов и образов из ваших снов</li>
-                    <li>Голосовой ввод описания сна</li>
-                    <li>Голосовое воспроизведение интерпретаций</li>
-                    <li>Визуализация частых тем и символов в ваших снах</li>
-                    <li>История всех ваших снов и их интерпретаций</li>
-                </ul>
-                <h3 style="margin-top: 20px; color: var(--primary);">Как это работает?</h3>
-                <p style="margin-top: 15px;">Мы используем передовые технологии искусственного интеллекта и интеграцию с платформой n8n для обработки данных и предоставления точных интерпретаций ваших снов.</p>
-            </div>
-        </section>
-    </main>
+        </div>
+    </div>
 
     <script>
-        // 🔴 ИСПРАВЛЕНИЕ: Упрощенная конфигурация с демо-режимом
-        const API_CONFIG = {
-            demoMode: false, // Переключите на false, когда n8n будет настроен
-            baseUrl: 'https://primary-production-d193.up.railway.app',
-            webhookPath: '/webhook-test/0a1a369b-5e24-42a5-8296-4f5846f2a290'
-        };
+        // Конфигурация n8n вебхука
+        const N8N_WEBHOOK_URL = 'https://primary-production-d193.up.railway.app/webhook/f406671e-c954-4691-b39a-66c90aa2f103/chat';
 
-        // Текущее состояние приложения
-        let currentUser = null;
-        let isRecording = false;
-        let mediaRecorder = null;
-        let audioChunks = [];
-
-        // Сохранение сообщений в localStorage
-        const MESSAGE_STORAGE_KEY = 'sonnik_chat_messages';
-        const DREAMS_STORAGE_KEY = 'sonnik_user_dreams';
-
-        // DOM Elements
-        const authSection = document.getElementById('auth-section');
-        const chatSection = document.getElementById('chat-section');
-        const profileSection = document.getElementById('profile-section');
-        const aboutSection = document.getElementById('about-section');
-        const navLinks = document.querySelectorAll('.nav-link');
-        const loginBtn = document.getElementById('login-btn');
-        const registerBtn = document.getElementById('register-btn');
-        const authTabs = document.querySelectorAll('.auth-tab');
-        const authForms = document.querySelectorAll('.auth-form');
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
+        // DOM элементы
         const messagesContainer = document.getElementById('messages-container');
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
-        const voiceButton = document.getElementById('voice-button');
-        const passwordInput = document.getElementById('register-password');
-        const passwordStrengthBar = document.getElementById('password-strength-bar');
-        const profileDreamsList = document.getElementById('profile-dreams-list');
-        const userName = document.getElementById('user-name');
-        const userEmail = document.getElementById('user-email');
-        const userBirthdate = document.getElementById('user-birthdate');
 
-        // Функция для показа уведомлений
-        function showNotification(message, type = 'success') {
+        // Показать уведомление
+        function showNotification(message, isError = false) {
             const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
+            notification.className = `notification ${isError ? 'error' : ''}`;
             notification.textContent = message;
             
-            document.getElementById('notification-area').appendChild(notification);
-            
-            setTimeout(() => notification.classList.add('show'), 100);
+            document.body.appendChild(notification);
             
             setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 300);
-            }, 4000);
+                notification.remove();
+            }, 3000);
         }
 
-        // 🔴 ИСПРАВЛЕНИЕ: Функция для добавления индикатора загрузки
-        function addLoadingMessage() {
-            const loadingMsg = document.createElement('div');
-            loadingMsg.className = 'message bot-message';
-            loadingMsg.innerHTML = `
-                <div class="message-text">
-                    <i class="fas fa-spinner fa-spin"></i> Анализирую сон...
-                </div>
-                <div class="message-time">${new Date().getHours()}:${(new Date().getMinutes() < 10 ? '0' : '') + new Date().getMinutes()}</div>
-            `;
-            messagesContainer.appendChild(loadingMsg);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            return loadingMsg;
-        }
-
-        // 🔴 ИСПРАВЛЕНИЕ: Функция для удаления индикатора загрузки
-        function removeLoadingMessage(loadingMsg) {
-            if (loadingMsg && loadingMsg.parentNode) {
-                messagesContainer.removeChild(loadingMsg);
-            }
-        }
-
-        // Сохранение сообщений в localStorage
-        function saveMessageToStorage(message, sender) {
-            const messages = getMessagesFromStorage();
-            messages.push({
-                text: message,
-                sender: sender,
-                timestamp: new Date().toISOString()
-            });
-            localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(messages));
-        }
-
-        // Получение сообщений из localStorage
-        function getMessagesFromStorage() {
-            const messages = localStorage.getItem(MESSAGE_STORAGE_KEY);
-            return messages ? JSON.parse(messages) : [];
-        }
-
-        // Загрузка сообщений из localStorage
-        function loadMessagesFromStorage() {
-            const messages = getMessagesFromStorage();
-            // Оставляем только приветственное сообщение, если нет сохраненных
-            if (messages.length === 0) return;
-            
-            // Очищаем контейнер
-            messagesContainer.innerHTML = '';
-            
-            // Добавляем приветственное сообщение
-            const welcomeMsg = document.createElement('div');
-            welcomeMsg.className = 'message bot-message';
-            welcomeMsg.innerHTML = `
-                <div class="message-text">
-                    Привет! Я помогу расшифровать твои сны. Опиши, что тебе приснилось, и я дам психологическую интерпретацию.
-                </div>
-                <div class="message-time">${new Date().getHours()}:${(new Date().getMinutes() < 10 ? '0' : '') + new Date().getMinutes()}</div>
-            `;
-            messagesContainer.appendChild(welcomeMsg);
-            
-            // Добавляем сохраненные сообщения
-            messages.forEach(msg => {
-                addMessageToDOM(msg.text, msg.sender, new Date(msg.timestamp));
-            });
-        }
-
-        // Установка времени приветственного сообщения
-        document.getElementById('welcome-time').textContent = new Date().getHours() + ':' + 
-            (new Date().getMinutes() < 10 ? '0' : '') + new Date().getMinutes();
-
-        // Инициализация приложения
-        document.addEventListener('DOMContentLoaded', () => {
-            // Загружаем сообщения из localStorage
-            loadMessagesFromStorage();
-            
-            // Проверяем авторизацию
-            const token = localStorage.getItem('authToken');
-            if (token) {
-                // В демо-режиме просто показываем чат
-                currentUser = {
-                    name: localStorage.getItem('userName') || 'Пользователь',
-                    email: localStorage.getItem('userEmail') || 'user@example.com',
-                    birthdate: localStorage.getItem('userBirthdate') || '1990-01-01'
-                };
-                showChatSection();
-            }
-        });
-
-        // Навигация
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const sectionId = link.getAttribute('data-section') + '-section';
-                
-                navLinks.forEach(nav => nav.classList.remove('active'));
-                link.classList.add('active');
-                
-                document.querySelectorAll('.section').forEach(section => {
-                    section.classList.remove('active');
-                });
-                document.getElementById(sectionId).classList.add('active');
-                
-                if (sectionId === 'profile-section' && currentUser) {
-                    loadProfileData();
-                }
-            });
-        });
-
-        // Кнопки авторизации
-        loginBtn.addEventListener('click', showAuthSection);
-        registerBtn.addEventListener('click', showAuthSection);
-
-        function showAuthSection() {
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-            });
-            authSection.classList.add('active');
-            
-            navLinks.forEach(nav => nav.classList.remove('active'));
-        }
-
-        // Вкладки авторизации
-        authTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.getAttribute('data-tab');
-                
-                authTabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                authForms.forEach(form => form.classList.remove('active'));
-                document.getElementById(`${tabName}-form`).classList.add('active');
-            });
-        });
-
-        // Индикатор сложности пароля
-        passwordInput.addEventListener('input', () => {
-            const password = passwordInput.value;
-            let strength = 0;
-            
-            if (password.length >= 8) strength += 1;
-            if (/\d/.test(password)) strength += 1;
-            if (/[a-zA-Z]/.test(password)) strength += 1;
-            if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
-            
-            passwordStrengthBar.className = 'password-strength-bar';
-            if (strength === 0) {
-            } else if (strength === 1) {
-                passwordStrengthBar.classList.add('password-weak');
-            } else if (strength === 2) {
-                passwordStrengthBar.classList.add('password-medium');
-            } else {
-                passwordStrengthBar.classList.add('password-strong');
-            }
-        });
-
-        // Валидация форм
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            
-            if (!isValidEmail(email)) {
-                document.getElementById('login-email-error').style.display = 'block';
-                return;
-            } else {
-                document.getElementById('login-email-error').style.display = 'none';
-            }
-            
-            if (password.length < 6) {
-                document.getElementById('login-password-error').style.display = 'block';
-                return;
-            } else {
-                document.getElementById('login-password-error').style.display = 'none';
-            }
-            
-            // Демо-авторизация
-            demoLogin(email, password);
-        });
-
-        registerForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('register-name').value;
-            const email = document.getElementById('register-email').value;
-            const birthdate = document.getElementById('register-birthdate').value;
-            const password = document.getElementById('register-password').value;
-            
-            let isValid = true;
-            
-            if (name.length < 2) {
-                document.getElementById('register-name-error').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('register-name-error').style.display = 'none';
-            }
-            
-            if (!isValidEmail(email)) {
-                document.getElementById('register-email-error').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('register-email-error').style.display = 'none';
-            }
-            
-            if (!isValidDate(birthdate)) {
-                document.getElementById('register-birthdate-error').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('register-birthdate-error').style.display = 'none';
-            }
-            
-            if (password.length < 8 || !/\d/.test(password) || !/[a-zA-Z]/.test(password)) {
-                document.getElementById('register-password-error').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('register-password-error').style.display = 'none';
-            }
-            
-            if (!isValid) return;
-            
-            // Демо-регистрация
-            demoRegister(name, email, birthdate, password);
-        });
-
-        // Демо-авторизация
-        function demoLogin(email, password) {
-            showNotification('Вход выполнен успешно!', 'success');
-            
-            // Сохраняем данные пользователя
-            localStorage.setItem('authToken', 'demo-token');
-            localStorage.setItem('userEmail', email);
-            localStorage.setItem('userName', email.split('@')[0]);
-            
-            currentUser = {
-                name: email.split('@')[0],
-                email: email,
-                birthdate: '1990-01-01'
-            };
-            
-            showChatSection();
-        }
-
-        // Демо-регистрация
-        function demoRegister(name, email, birthdate, password) {
-            showNotification('Регистрация прошла успешно!', 'success');
-            
-            // Сохраняем данные пользователя
-            localStorage.setItem('authToken', 'demo-token');
-            localStorage.setItem('userEmail', email);
-            localStorage.setItem('userName', name);
-            localStorage.setItem('userBirthdate', birthdate);
-            
-            currentUser = {
-                name: name,
-                email: email,
-                birthdate: birthdate
-            };
-            
-            showChatSection();
-        }
-
-        // Функционал чата
-        sendButton.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        function sendMessage() {
-            const message = messageInput.value.trim();
-            if (message === '') return;
-            
-            addMessageToDOM(message, 'user');
-            // Сохраняем сообщение пользователя
-            saveMessageToStorage(message, 'user');
-            messageInput.value = '';
-            
-            // 🔴 ИСПРАВЛЕНИЕ: Используем правильную отправку сообщения
-            sendMessageToBot(message);
-        }
-
-        // Добавление сообщения в DOM
-        function addMessageToDOM(text, sender, timestamp = new Date()) {
+        // Добавить сообщение в чат
+        function addMessage(text, isUser = false) {
             const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message');
-            messageDiv.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
-            
-            const messageText = document.createElement('div');
-            messageText.classList.add('message-text');
-            messageText.textContent = text;
-            
-            const messageTime = document.createElement('div');
-            messageTime.classList.add('message-time');
-            messageTime.textContent = timestamp.getHours() + ':' + 
-                (timestamp.getMinutes() < 10 ? '0' : '') + timestamp.getMinutes();
-            
-            messageDiv.appendChild(messageText);
-            messageDiv.appendChild(messageTime);
-            
-            if (sender === 'bot') {
-                const ttsButton = document.createElement('button');
-                ttsButton.classList.add('tts-button');
-                ttsButton.innerHTML = '<i class="fas fa-volume-up"></i>';
-                ttsButton.addEventListener('click', () => {
-                    textToSpeech(text);
-                });
-                messageDiv.insertBefore(ttsButton, messageText);
-            }
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.textContent = text;
             
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // 🔴 ИСПРАВЛЕНИЕ: Улучшенная функция отправки сообщения
-        async function sendMessageToBot(message) {
-            // Добавляем индикатор загрузки
-            const loadingMsg = addLoadingMessage();
-
-            // Если включен демо-режим, используем локальную логику
-            if (API_CONFIG.demoMode) {
-                setTimeout(() => {
-                    removeLoadingMessage(loadingMsg);
-                    const demoResponse = generateDemoResponse(message);
-                    addMessageToDOM(demoResponse, 'bot');
-                    saveMessageToStorage(demoResponse, 'bot');
-                    updateDreamsList(message, demoResponse);
-                }, 1000 + Math.random() * 2000);
-                return;
-            }
-
-            // Режим работы с реальным сервером
+        // Отправить сообщение в n8n
+        async function sendToN8N(message) {
             try {
-                // Получаем логин и пароль из localStorage
-                const email = localStorage.getItem('userEmail');
-                const password = localStorage.getItem('userPassword');
-                
-                // 🔴 ИСПРАВЛЕНИЕ: Правильный запрос к n8n
-                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.webhookPath, {
+                // Простой POST запрос без лишних заголовков
+                const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
                     },
                     body: JSON.stringify({
-                        message,
-                        email,
-                        password,
-                        userId: currentUser?.id
+                        message: message
                     })
                 });
-                
-                removeLoadingMessage(loadingMsg);
-                
+
                 if (!response.ok) {
-                    throw new Error('Ошибка сервера: ' + response.status);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
+
                 const data = await response.json();
-                
-                if (data.success) {
-                    addMessageToDOM(data.response, 'bot', new Date());
-                    saveMessageToStorage(data.response, 'bot');
-                    loadDreamsList();
-                } else {
-                    throw new Error(data.message || 'Неизвестная ошибка сервера');
-                }
+                return data;
             } catch (error) {
-                removeLoadingMessage(loadingMsg);
-                console.error('Ошибка отправки сообщения:', error);
-                showNotification('Ошибка отправки сообщения: ' + error.message, 'error');
+                console.error('Ошибка отправки в n8n:', error);
+                throw error;
+            }
+        }
+
+        // Обработчик отправки сообщения
+        async function handleSendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Добавляем сообщение пользователя
+            addMessage(message, true);
+            messageInput.value = '';
+
+            try {
+                // Показываем индикатор загрузки
+                const loadingMsg = document.createElement('div');
+                loadingMsg.className = 'message bot-message';
+                loadingMsg.textContent = 'Отправка запроса...';
+                messagesContainer.appendChild(loadingMsg);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                // Отправляем в n8n
+                const response = await sendToN8N(message);
                 
-                // 🔴 ИСПРАВЛЕНИЕ: Показываем демо-ответ только в случае ошибки
-                setTimeout(() => {
-                    const demoResponse = "Это демо-ответ. Для работы с ИИ настройте n8n workflow.";
-                    addMessageToDOM(demoResponse, 'bot', new Date());
-                    saveMessageToStorage(demoResponse, 'bot');
-                }, 1000);
-            }
-        }
+                // Убираем индикатор загрузки
+                loadingMsg.remove();
 
-        // 🔴 ИСПРАВЛЕНИЕ: Функция генерации демо-ответов
-        function generateDemoResponse(message) {
-            const lowerMessage = message.toLowerCase();
-            
-            if (lowerMessage.includes('летать') || lowerMessage.includes('полёт') || lowerMessage.includes('полет')) {
-                return "Сны о полёте часто символизируют свободу, стремление к независимости или желание уйти от проблем. Возможно, вы чувствуете, что преодолеваете какие-то трудности в жизни.";
-            } else if (lowerMessage.includes('вода') || lowerMessage.includes('река') || lowerMessage.includes('море')) {
-                return "Вода во сне часто представляет эмоции и подсознание. Спокойная вода может означать гармонию, а бурная - эмоциональные потрясения или нерешённые проблемы.";
-            } else if (lowerMessage.includes('животные') || lowerMessage.includes('звери') || lowerMessage.includes('птицы')) {
-                return "Животные во сне могут отражать ваши инстинкты и подсознательные желания. Попробуйте вспомнить, как вы взаимодействовали с животными во сне - это может многое рассказать о ваших текущих переживаниях.";
-            } else if (lowerMessage.includes('погоня') || lowerMessage.includes('бег') || lowerMessage.includes('убегать')) {
-                return "Сны о погоне часто связаны с чувством тревоги или необходимостью решить какую-то проблему в реальной жизни. Возможно, вы избегаете чего-то важного.";
-            } else if (lowerMessage.includes('дом') || lowerMessage.includes('квартира') || lowerMessage.includes('комната')) {
-                return "Дом во сне часто символизирует ваше внутреннее состояние или личность. Разные комнаты могут представлять разные аспекты вашей жизни или психики.";
-            } else {
-                const responses = [
-                    "Интересный сон! Чтобы дать более точную интерпретацию, расскажите подробнее о деталях и эмоциях, которые вы испытывали во сне.",
-                    "Этот сон содержит много символов. Попробуйте вспомнить самые яркие моменты и описать их подробнее для более точной интерпретации.",
-                    "На основе вашего описания, этот сон может указывать на внутренние переживания или нерешённые вопросы. Обратите внимание на повторяющиеся образы в ваших снах.",
-                    "Сны часто отражают наши подсознательные мысли и переживания. Попробуйте вести дневник снов, чтобы отслеживать закономерности."
-                ];
-                return responses[Math.floor(Math.random() * responses.length)];
-            }
-        }
-
-        // Обновление списка снов
-        function updateDreamsList(dreamDescription, interpretation) {
-            const dreams = JSON.parse(localStorage.getItem(DREAMS_STORAGE_KEY) || '[]');
-            
-            dreams.push({
-                id: dreams.length + 1,
-                date: new Date().toISOString(),
-                description: dreamDescription,
-                interpretation: interpretation,
-                preview: dreamDescription.substring(0, 50) + '...'
-            });
-            
-            localStorage.setItem(DREAMS_STORAGE_KEY, JSON.stringify(dreams));
-            
-            // Обновляем отображение в профиле, если он открыт
-            if (profileSection.classList.contains('active')) {
-                renderDreamsList(dreams, profileDreamsList);
-            }
-        }
-
-        // Голосовой ввод
-        voiceButton.addEventListener('click', toggleRecording);
-
-        function toggleRecording() {
-            if (!isRecording) {
-                startRecording();
-            } else {
-                stopRecording();
-            }
-        }
-
-        function startRecording() {
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ audio: true })
-                    .then(stream => {
-                        mediaRecorder = new MediaRecorder(stream);
-                        audioChunks = [];
-                        
-                        mediaRecorder.ondataavailable = event => {
-                            audioChunks.push(event.data);
-                        };
-                        
-                        mediaRecorder.onstop = () => {
-                            // В демо-режиме просто имитируем распознавание
-                            simulateVoiceRecognition();
-                        };
-                        
-                        mediaRecorder.start();
-                        isRecording = true;
-                        voiceButton.classList.add('recording');
-                    })
-                    .catch(error => {
-                        console.error('Ошибка доступа к микрофону:', error);
-                        showNotification('Не удалось получить доступ к микрофону', 'error');
-                    });
-            } else {
-                showNotification('Ваш браузер не поддерживает запись аудио', 'error');
-            }
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && isRecording) {
-                mediaRecorder.stop();
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                isRecording = false;
-                voiceButton.classList.remove('recording');
-            }
-        }
-
-        // Имитация распознавания голоса
-        function simulateVoiceRecognition() {
-            const demoTexts = [
-                "Приснилось, что я летаю над городом и вижу все с высоты птичьего полёта.",
-                "Мне снилось, что я бегу по бесконечному коридору и не могу найти выход.",
-                "Во сне я разговаривал с животными в лесу, и они давали мне советы.",
-                "Приснилось, что я плаваю в океане с дельфинами и другими морскими обитателями.",
-                "Мне снился старый дом из моего детства, но в нём были странные комнаты, которых раньше не было."
-            ];
-            
-            const randomText = demoTexts[Math.floor(Math.random() * demoTexts.length)];
-            messageInput.value = randomText;
-            showNotification('Голосовое сообщение распознано', 'success');
-        }
-
-        // Озвучивание текста
-        function textToSpeech(text) {
-            // В демо-режиме используем браузерный синтезатор речи
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ru-RU';
-                utterance.rate = 0.9;
-                window.speechSynthesis.speak(utterance);
-                showNotification('Озвучивание запущено', 'success');
-            } else {
-                showNotification('Ваш браузер не поддерживает озвучивание текста', 'error');
-            }
-        }
-
-        // Загрузка списка снов
-        function loadDreamsList() {
-            const dreams = JSON.parse(localStorage.getItem(DREAMS_STORAGE_KEY) || '[]');
-            renderDreamsList(dreams, profileDreamsList);
-        }
-
-        function renderDreamsList(dreams, container) {
-            if (!dreams || dreams.length === 0) {
-                container.innerHTML = '<div class="loading">У вас пока нет записанных снов</div>';
-                return;
-            }
-            
-            container.innerHTML = '';
-            
-            dreams.forEach(dream => {
-                const dreamItem = document.createElement('div');
-                dreamItem.classList.add('dream-item');
-                dreamItem.setAttribute('data-dream-id', dream.id);
-                
-                const dreamDate = document.createElement('div');
-                dreamDate.classList.add('dream-date');
-                dreamDate.textContent = new Date(dream.date).toLocaleDateString('ru-RU');
-                
-                const dreamPreview = document.createElement('div');
-                dreamPreview.classList.add('dream-preview');
-                dreamPreview.textContent = dream.preview;
-                
-                dreamItem.appendChild(dreamDate);
-                dreamItem.appendChild(dreamPreview);
-                
-                dreamItem.addEventListener('click', () => {
-                    loadDreamDetail(dream.id);
-                });
-                
-                container.appendChild(dreamItem);
-            });
-        }
-
-        async function loadDreamDetail(dreamId) {
-            const dreams = JSON.parse(localStorage.getItem(DREAMS_STORAGE_KEY) || '[]');
-            const dream = dreams.find(d => d.id === dreamId);
-            
-            if (dream) {
-                renderDreamDetail(dream);
-            }
-        }
-
-        function renderDreamDetail(dream) {
-            const dreamDetailContainer = document.querySelector('.profile-content');
-            
-            document.querySelectorAll('.dream-detail').forEach(detail => {
-                detail.classList.remove('active');
-            });
-            
-            let dreamDetail = document.getElementById(`dream-detail-${dream.id}`);
-            if (!dreamDetail) {
-                dreamDetail = document.createElement('div');
-                dreamDetail.classList.add('dream-detail');
-                dreamDetail.id = `dream-detail-${dream.id}`;
-                dreamDetailContainer.insertBefore(dreamDetail, document.querySelector('.chart-container'));
-            }
-            
-            dreamDetail.innerHTML = `
-                <h3>Сон от ${new Date(dream.date).toLocaleDateString('ru-RU')}</h3>
-                <p><strong>Описание:</strong> ${dream.description}</p>
-                <p><strong>Интерпретация:</strong> ${dream.interpretation}</p>
-            `;
-            
-            dreamDetail.classList.add('active');
-        }
-
-        async function loadAnalytics() {
-            // Демо-аналитика
-            renderAnalyticsChart({
-                labels: ['Полет', 'Вода', 'Животные', 'Погоня', 'Дом'],
-                data: [12, 8, 6, 5, 4]
-            });
-        }
-
-        function renderAnalyticsChart(analytics) {
-            const ctx = document.getElementById('dream-chart').getContext('2d');
-            
-            if (window.dreamChart instanceof Chart) {
-                window.dreamChart.destroy();
-            }
-            
-            window.dreamChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: analytics.labels || ['Полет', 'Вода', 'Животные', 'Погоня', 'Дом'],
-                    datasets: [{
-                        label: 'Частота тем в снах',
-                        data: analytics.data || [12, 8, 6, 5, 4],
-                        backgroundColor: [
-                            'rgba(109, 93, 252, 0.7)',
-                            'rgba(138, 79, 255, 0.7)',
-                            'rgba(156, 39, 176, 0.7)',
-                            'rgba(103, 58, 183, 0.7)',
-                            'rgba(63, 81, 181, 0.7)'
-                        ],
-                        borderColor: [
-                            'rgba(109, 93, 252, 1)',
-                            'rgba(138, 79, 255, 1)',
-                            'rgba(156, 39, 176, 1)',
-                            'rgba(103, 58, 183, 1)',
-                            'rgba(63, 81, 181, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Количество упоминаний'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Темы снов'
-                            }
-                        }
-                    }
+                // Добавляем ответ от n8n
+                if (response && response.response) {
+                    addMessage(response.response);
+                } else {
+                    addMessage('Получен ответ от сервера, но формат не распознан');
                 }
-            });
-        }
 
-        // Вспомогательные функции
-        function showChatSection() {
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-            });
-            chatSection.classList.add('active');
-            
-            navLinks.forEach(nav => nav.classList.remove('active'));
-            document.querySelector('[data-section="chat"]').classList.add('active');
-            
-            loginBtn.textContent = 'Выйти';
-            registerBtn.style.display = 'none';
-            
-            loginBtn.onclick = () => {
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('userEmail');
-                localStorage.removeItem('userPassword');
-                currentUser = null;
-                loginBtn.textContent = 'Войти';
-                registerBtn.style.display = 'block';
-                showAuthSection();
-            };
-        }
+            } catch (error) {
+                // Убираем индикатор загрузки
+                const loadingMsg = messagesContainer.querySelector('.bot-message:last-child');
+                if (loadingMsg && loadingMsg.textContent === 'Отправка запроса...') {
+                    loadingMsg.remove();
+                }
 
-        function loadProfileData() {
-            if (currentUser) {
-                userName.textContent = currentUser.name;
-                userEmail.textContent = currentUser.email;
-                userBirthdate.textContent = `Родился: ${new Date(currentUser.birthdate).toLocaleDateString('ru-RU')}`;
+                // Показываем ошибку
+                showNotification('Ошибка отправки: ' + error.message, true);
+                addMessage('Извините, произошла ошибка при отправке сообщения');
             }
-            
-            loadDreamsList();
-            loadAnalytics();
         }
 
-        function isValidEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
+        // Назначение обработчиков событий
+        sendButton.addEventListener('click', handleSendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+            }
+        });
 
-        function isValidDate(dateString) {
-            const date = new Date(dateString);
-            return !isNaN(date.getTime());
-        }
+        // Фокус на поле ввода при загрузке
+        messageInput.focus();
     </script>
 </body>
 </html>
-
-
