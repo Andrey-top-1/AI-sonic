@@ -258,27 +258,18 @@
         /* Chat Section */
         .chat-container {
             display: flex;
+            flex-direction: column;
             height: 70vh;
-            gap: 20px;
-        }
-
-        .chat-history {
-            flex: 1;
-            background-color: var(--card-bg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 20px;
-            overflow-y: auto;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .chat-messages {
-            flex: 2;
+            flex: 1;
             display: flex;
             flex-direction: column;
-            background-color: var(--card-bg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
             overflow: hidden;
+            margin-bottom: 20px;
         }
 
         .messages-container {
@@ -288,6 +279,8 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            background-color: var(--bg);
+            border-radius: var(--border-radius);
         }
 
         .message {
@@ -333,8 +326,11 @@
         .input-container {
             display: flex;
             padding: 20px;
-            border-top: 1px solid #eee;
             gap: 10px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            justify-content: center;
         }
 
         .message-input {
@@ -345,6 +341,7 @@
             font-size: 1rem;
             resize: none;
             height: 50px;
+            max-width: 500px;
         }
 
         .send-button, .voice-button {
@@ -478,6 +475,34 @@
             color: var(--text-light);
         }
 
+        /* Notification styles */
+        #notification-area {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .notification {
+            background-color: var(--card-bg);
+            border-left: 4px solid var(--success);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            border-left-color: var(--error);
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .chat-container, .profile-container {
@@ -496,6 +521,15 @@
             
             .message {
                 max-width: 90%;
+            }
+            
+            .input-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .message-input {
+                max-width: 100%;
             }
         }
     </style>
@@ -523,7 +557,7 @@
         </div>
     </header>
 
-    <!-- 🔴 ИСПРАВЛЕНИЕ: Добавлена область для уведомлений -->
+    <!-- Область для уведомлений -->
     <div id="notification-area"></div>
 
     <main class="container">
@@ -585,15 +619,8 @@
         <section id="chat-section" class="section active">
             <h2 class="section-title">Расшифровка ваших снов</h2>
             <div class="chat-container">
-                <div class="chat-history">
-                    <h3>История снов</h3>
-                    <div class="dreams-list" id="chat-dreams-list">
-                        <div class="loading">Загрузка истории...</div>
-                    </div>
-                </div>
                 <div class="chat-messages">
                     <div class="messages-container" id="messages-container">
-                        <!-- 🔴 ИСПРАВЛЕНИЕ: Добавлено приветственное сообщение -->
                         <div class="message bot-message">
                             <div class="message-text">
                                 Привет! Я помогу расшифровать твои сны. Опиши, что тебе приснилось, и я дам психологическую интерпретацию.
@@ -601,15 +628,15 @@
                             <div class="message-time" id="welcome-time"></div>
                         </div>
                     </div>
-                    <div class="input-container">
-                        <textarea class="message-input" id="message-input" placeholder="Опишите свой сон..."></textarea>
-                        <button class="voice-button" id="voice-button">
-                            <i class="fas fa-microphone"></i>
-                        </button>
-                        <button class="send-button" id="send-button">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
+                </div>
+                <div class="input-container">
+                    <textarea class="message-input" id="message-input" placeholder="Опишите свой сон..."></textarea>
+                    <button class="voice-button" id="voice-button">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="send-button" id="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
                 </div>
             </div>
         </section>
@@ -668,10 +695,9 @@
     </main>
 
     <script>
-        // 🔴 ИСПРАВЛЕНИЕ: Обновленная конфигурация API
+        // Конфигурация API
         const API_CONFIG = {
-            // ЗАМЕНИТЕ НА ВАШИ РЕАЛЬНЫЕ URL-адреса n8n
-            baseUrl: 'https://primary-production-d193.up.railway.app/webhook-test/0a1a369b-5e24-42a5-8296-4f5846f2a290', // Ваш Railway URL
+            baseUrl: 'https://primary-production-d193.up.railway.app/webhook/f406671e-c954-4691-b39a-66c90aa2f103/chat',
             endpoints: {
                 register: '/webhook/register',
                 login: '/webhook/login', 
@@ -711,13 +737,12 @@
         const voiceButton = document.getElementById('voice-button');
         const passwordInput = document.getElementById('register-password');
         const passwordStrengthBar = document.getElementById('password-strength-bar');
-        const chatDreamsList = document.getElementById('chat-dreams-list');
         const profileDreamsList = document.getElementById('profile-dreams-list');
         const userName = document.getElementById('user-name');
         const userEmail = document.getElementById('user-email');
         const userBirthdate = document.getElementById('user-birthdate');
 
-        // 🔴 ИСПРАВЛЕНИЕ: Функция для показа уведомлений
+        // Функция для показа уведомлений
         function showNotification(message, type = 'success') {
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
@@ -733,7 +758,7 @@
             }, 4000);
         }
 
-        // 🔴 ИСПРАВЛЕНИЕ: Установка времени приветственного сообщения
+        // Установка времени приветственного сообщения
         document.getElementById('welcome-time').textContent = new Date().getHours() + ':' + 
             (new Date().getMinutes() < 10 ? '0' : '') + new Date().getMinutes();
 
@@ -745,7 +770,7 @@
             }
         });
 
-        // Навигация (без изменений)
+        // Навигация
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -778,7 +803,7 @@
             navLinks.forEach(nav => nav.classList.remove('active'));
         }
 
-        // Вкладки авторизации (без изменений)
+        // Вкладки авторизации
         authTabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabName = tab.getAttribute('data-tab');
@@ -791,7 +816,7 @@
             });
         });
 
-        // Индикатор сложности пароля (без изменений)
+        // Индикатор сложности пароля
         passwordInput.addEventListener('input', () => {
             const password = passwordInput.value;
             let strength = 0;
@@ -897,11 +922,6 @@
         }
 
         function addMessage(text, sender, timestamp = new Date()) {
-            // 🔴 ИСПРАВЛЕНИЕ: Убираем loading при первом сообщении
-            if (messagesContainer.querySelector('.loading')) {
-                messagesContainer.innerHTML = '';
-            }
-            
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message');
             messageDiv.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
@@ -981,8 +1001,7 @@
             }
         }
 
-        // 🔴 ИСПРАВЛЕНИЕ: Улучшенные API функции с обработкой ошибок
-
+        // API функции
         async function registerUser(name, email, birthdate, password) {
             try {
                 showNotification('Регистрация...', 'success');
@@ -1004,6 +1023,8 @@
                 
                 if (data.success) {
                     localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userEmail', email);
+                    localStorage.setItem('userPassword', password);
                     currentUser = data.user;
                     
                     showChatSection();
@@ -1038,6 +1059,8 @@
                 
                 if (data.success) {
                     localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userEmail', email);
+                    localStorage.setItem('userPassword', password);
                     currentUser = data.user;
                     
                     showChatSection();
@@ -1081,6 +1104,10 @@
 
         async function sendMessageToBot(message) {
             try {
+                // Получаем логин и пароль из localStorage
+                const email = localStorage.getItem('userEmail');
+                const password = localStorage.getItem('userPassword');
+                
                 const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.sendMessage, {
                     method: 'POST',
                     headers: {
@@ -1089,6 +1116,8 @@
                     },
                     body: JSON.stringify({
                         message,
+                        email,
+                        password,
                         userId: currentUser?.id
                     })
                 });
@@ -1105,36 +1134,10 @@
                 console.error('Ошибка отправки сообщения:', error);
                 showNotification('Ошибка отправки сообщения', 'error');
                 
-                // 🔴 ИСПРАВЛЕНИЕ: Заглушка для демо, если n8n не настроен
+                // Демо-ответ, если n8n не настроен
                 setTimeout(() => {
                     addMessage("Это демо-ответ. Для работы с ИИ настройте n8n workflow с интеграцией AI.", 'bot', new Date());
                 }, 1000);
-            }
-        }
-
-        async function loadChatHistory() {
-            try {
-                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.getChatHistory, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success && data.messages.length > 0) {
-                    messagesContainer.innerHTML = '';
-                    data.messages.forEach(msg => {
-                        addMessage(
-                            msg.text, 
-                            msg.sender, 
-                            new Date(msg.timestamp)
-                        );
-                    });
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки истории чата:', error);
             }
         }
 
@@ -1150,20 +1153,17 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    renderDreamsList(data.dreams, chatDreamsList);
                     renderDreamsList(data.dreams, profileDreamsList);
                 } else {
-                    chatDreamsList.innerHTML = '<div class="loading">У вас пока нет записанных снов</div>';
                     profileDreamsList.innerHTML = '<div class="loading">У вас пока нет записанных снов</div>';
                 }
             } catch (error) {
                 console.error('Ошибка загрузки списка снов:', error);
-                // 🔴 ИСПРАВЛЕНИЕ: Демо-данные для тестирования
+                // Демо-данные для тестирования
                 const demoDreams = [
                     { id: 1, date: new Date(), preview: 'Сон о полете над городом...' },
                     { id: 2, date: new Date(Date.now() - 86400000), preview: 'Встреча со старым другом...' }
                 ];
-                renderDreamsList(demoDreams, chatDreamsList);
                 renderDreamsList(demoDreams, profileDreamsList);
             }
         }
@@ -1218,7 +1218,7 @@
                 }
             } catch (error) {
                 console.error('Ошибка загрузки деталей сна:', error);
-                // 🔴 ИСПРАВЛЕНИЕ: Демо-данные
+                // Демо-данные
                 renderDreamDetail({
                     id: dreamId,
                     date: new Date(),
@@ -1269,7 +1269,7 @@
                 }
             } catch (error) {
                 console.error('Ошибка загрузки аналитики:', error);
-                // 🔴 ИСПРАВЛЕНИЕ: Демо-аналитика
+                // Демо-аналитика
                 renderAnalyticsChart({
                     labels: ['Полет', 'Вода', 'Животные', 'Погоня', 'Дом'],
                     data: [12, 8, 6, 5, 4]
@@ -1371,7 +1371,6 @@
                     throw new Error('Ошибка озвучивания текста');
                 }
 
-                // 🔴 ИСПРАВЛЕНИЕ: Правильная обработка аудиоответа
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
                 const audio = new Audio(audioUrl);
@@ -1401,6 +1400,8 @@
             
             loginBtn.onclick = () => {
                 localStorage.removeItem('authToken');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userPassword');
                 currentUser = null;
                 loginBtn.textContent = 'Войти';
                 registerBtn.style.display = 'block';
@@ -1409,7 +1410,6 @@
         }
 
         function loadChatData() {
-            loadChatHistory();
             loadDreamsList();
         }
 
@@ -1436,6 +1436,3 @@
     </script>
 </body>
 </html>
-
-
-
