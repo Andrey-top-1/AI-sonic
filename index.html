@@ -95,6 +95,8 @@
             color: white;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
         .user-icon:hover {
@@ -343,6 +345,11 @@
             color: var(--text-secondary);
         }
 
+        .text-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .action-buttons {
             display: flex;
             gap: 8px;
@@ -376,6 +383,12 @@
 
         .btn:active {
             transform: scale(0.95);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .pulse {
@@ -666,13 +679,14 @@
             <span>ИИ Сонник</span>
         </div>
         <div class="user-menu">
-            <div class="user-icon">
-                <i class="fas fa-user"></i>
+            <div class="user-icon" id="userIcon">
+                <i class="fas fa-user" id="userIconSymbol"></i>
+                <span id="userInitials" style="display: none;"></span>
             </div>
-            <div class="dropdown-menu">
-                <button id="loginBtn"><i class="fas fa-sign-in-alt"></i> Войти</button>
-                <button id="registerBtn"><i class="fas fa-user-plus"></i> Зарегистрироваться</button>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <button id="phoneLoginBtn"><i class="fas fa-mobile-alt"></i> Войти по телефону</button>
                 <button id="paymentBtn"><i class="fas fa-credit-card"></i> Оплатить</button>
+                <button id="logoutBtn" style="display: none;"><i class="fas fa-sign-out-alt"></i> Выйти</button>
             </div>
         </div>
     </header>
@@ -692,69 +706,37 @@
     <!-- Панель ввода -->
     <div class="input-container">
         <div class="input-wrapper">
-            <textarea class="text-input" id="messageInput" placeholder="Опишите свой сон..." rows="1"></textarea>
+            <textarea class="text-input" id="messageInput" placeholder="Опишите свой сон..." rows="1" disabled></textarea>
             <div class="action-buttons">
-                <button class="btn btn-voice" id="voiceBtn" aria-label="Голосовой ввод">
+                <button class="btn btn-voice" id="voiceBtn" aria-label="Голосовой ввод" disabled>
                     <i class="fas fa-microphone"></i>
                 </button>
-                <button class="btn btn-send" id="sendBtn" aria-label="Отправить сообщение">
+                <button class="btn btn-send" id="sendBtn" aria-label="Отправить сообщение" disabled>
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно входа -->
-    <div class="modal" id="loginModal">
+    <!-- Модальное окно входа по телефону -->
+    <div class="modal" id="phoneLoginModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Вход в аккаунт</h2>
+                <h2 class="modal-title">Вход по номеру телефона</h2>
                 <button class="close-modal">&times;</button>
             </div>
-            <form id="loginForm">
+            <form id="phoneLoginForm">
                 <div class="form-group">
-                    <label class="form-label" for="loginEmail">Email</label>
-                    <input type="email" class="form-input" id="loginEmail" placeholder="Ваш email" required>
+                    <label class="form-label" for="userName">Ваше имя</label>
+                    <input type="text" class="form-input" id="userName" placeholder="Введите ваше имя" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="loginPassword">Пароль</label>
-                    <input type="password" class="form-input" id="loginPassword" placeholder="Ваш пароль" required>
+                    <label class="form-label" for="userPhone">Номер телефона</label>
+                    <input type="tel" class="form-input" id="userPhone" placeholder="+7 (XXX) XXX-XX-XX" required>
                 </div>
                 <button type="submit" class="form-button">Войти</button>
                 <div class="form-footer">
-                    Нет аккаунта? <span class="form-link" id="showRegister">Зарегистрироваться</span>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Модальное окно регистрации -->
-    <div class="modal" id="registerModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Регистрация</h2>
-                <button class="close-modal">&times;</button>
-            </div>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label class="form-label" for="registerName">Имя</label>
-                    <input type="text" class="form-input" id="registerName" placeholder="Ваше имя" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="registerEmail">Email</label>
-                    <input type="email" class="form-input" id="registerEmail" placeholder="Ваш email" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="registerPassword">Пароль</label>
-                    <input type="password" class="form-input" id="registerPassword" placeholder="Придумайте пароль" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="registerConfirmPassword">Подтвердите пароль</label>
-                    <input type="password" class="form-input" id="registerConfirmPassword" placeholder="Повторите пароль" required>
-                </div>
-                <button type="submit" class="form-button">Зарегистрироваться</button>
-                <div class="form-footer">
-                    Уже есть аккаунт? <span class="form-link" id="showLogin">Войти</span>
+                    Входя в аккаунт, вы соглашаетесь с условиями использования
                 </div>
             </form>
         </div>
@@ -801,15 +783,18 @@
             const voiceBtn = document.getElementById('voiceBtn');
             const starsContainer = document.getElementById('stars');
             
+            // Элементы авторизации
+            const userIcon = document.getElementById('userIcon');
+            const userIconSymbol = document.getElementById('userIconSymbol');
+            const userInitials = document.getElementById('userInitials');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const phoneLoginBtn = document.getElementById('phoneLoginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            
             // Модальные окна
-            const loginModal = document.getElementById('loginModal');
-            const registerModal = document.getElementById('registerModal');
+            const phoneLoginModal = document.getElementById('phoneLoginModal');
             const paymentModal = document.getElementById('paymentModal');
-            const loginBtn = document.getElementById('loginBtn');
-            const registerBtn = document.getElementById('registerBtn');
             const paymentBtn = document.getElementById('paymentBtn');
-            const showRegister = document.getElementById('showRegister');
-            const showLogin = document.getElementById('showLogin');
             const closeButtons = document.querySelectorAll('.close-modal');
             
             // Создание анимации звёзд
@@ -840,6 +825,60 @@
                 }
             }
             
+            // Проверка авторизации
+            function checkAuth() {
+                const userData = JSON.parse(localStorage.getItem('userData'));
+                if (userData) {
+                    // Пользователь авторизован
+                    updateUIForLoggedInUser(userData);
+                    return true;
+                } else {
+                    // Пользователь не авторизован
+                    updateUIForGuest();
+                    return false;
+                }
+            }
+            
+            // Обновление UI для авторизованного пользователя
+            function updateUIForLoggedInUser(userData) {
+                // Активируем поле ввода и кнопки
+                messageInput.disabled = false;
+                messageInput.placeholder = "Опишите свой сон...";
+                sendBtn.disabled = false;
+                voiceBtn.disabled = false;
+                
+                // Обновляем иконку пользователя
+                userIconSymbol.style.display = 'none';
+                userInitials.style.display = 'block';
+                userInitials.textContent = getInitials(userData.name);
+                
+                // Обновляем выпадающее меню
+                phoneLoginBtn.style.display = 'none';
+                logoutBtn.style.display = 'block';
+            }
+            
+            // Обновление UI для гостя
+            function updateUIForGuest() {
+                // Деактивируем поле ввода и кнопки
+                messageInput.disabled = true;
+                messageInput.placeholder = "Войдите, чтобы отправить сообщение";
+                sendBtn.disabled = true;
+                voiceBtn.disabled = true;
+                
+                // Обновляем иконку пользователя
+                userIconSymbol.style.display = 'block';
+                userInitials.style.display = 'none';
+                
+                // Обновляем выпадающее меню
+                phoneLoginBtn.style.display = 'block';
+                logoutBtn.style.display = 'none';
+            }
+            
+            // Получение инициалов из имени
+            function getInitials(name) {
+                return name.split(' ').map(word => word[0]).join('').toUpperCase();
+            }
+            
             // Управление модальными окнами
             function openModal(modal) {
                 modal.classList.add('active');
@@ -850,23 +889,13 @@
             }
             
             function closeAllModals() {
-                closeModal(loginModal);
-                closeModal(registerModal);
+                closeModal(phoneLoginModal);
                 closeModal(paymentModal);
             }
             
             // Обработчики модальных окон
-            loginBtn.addEventListener('click', () => openModal(loginModal));
-            registerBtn.addEventListener('click', () => openModal(registerModal));
+            phoneLoginBtn.addEventListener('click', () => openModal(phoneLoginModal));
             paymentBtn.addEventListener('click', () => openModal(paymentModal));
-            showRegister.addEventListener('click', () => {
-                closeModal(loginModal);
-                openModal(registerModal);
-            });
-            showLogin.addEventListener('click', () => {
-                closeModal(registerModal);
-                openModal(loginModal);
-            });
             
             closeButtons.forEach(button => {
                 button.addEventListener('click', function() {
@@ -882,19 +911,45 @@
                 }
             });
             
-            // Обработка форм
-            document.getElementById('loginForm').addEventListener('submit', function(e) {
+            // Обработка формы входа по телефону
+            document.getElementById('phoneLoginForm').addEventListener('submit', function(e) {
                 e.preventDefault();
-                // Здесь должна быть реальная логинация
-                alert('Вход выполнен успешно!');
-                closeModal(loginModal);
+                
+                const userName = document.getElementById('userName').value.trim();
+                const userPhone = document.getElementById('userPhone').value.trim();
+                
+                if (!userName || !userPhone) {
+                    alert('Пожалуйста, заполните все поля');
+                    return;
+                }
+                
+                // Сохраняем данные пользователя
+                const userData = {
+                    name: userName,
+                    phone: userPhone,
+                    loginTime: new Date().toISOString()
+                };
+                
+                localStorage.setItem('userData', JSON.stringify(userData));
+                
+                // Обновляем UI
+                updateUIForLoggedInUser(userData);
+                
+                // Закрываем модальное окно
+                closeModal(phoneLoginModal);
+                
+                // Очищаем форму
+                document.getElementById('phoneLoginForm').reset();
+                
+                // Добавляем приветственное сообщение
+                addMessage(`Добро пожаловать, ${userName}! Теперь вы можете описывать свои сны и получать толкования.`, 'bot');
             });
             
-            document.getElementById('registerForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Здесь должна быть реальная регистрация
-                alert('Регистрация прошла успешно!');
-                closeModal(registerModal);
+            // Обработка выхода
+            logoutBtn.addEventListener('click', function() {
+                localStorage.removeItem('userData');
+                checkAuth();
+                addMessage('Вы вышли из аккаунта. Для отправки сообщений войдите снова.', 'bot');
             });
             
             // Обработка выбора плана оплаты
@@ -968,6 +1023,12 @@
             
             // Отправка сообщения
             async function sendMessage() {
+                // Проверяем авторизацию
+                if (!checkAuth()) {
+                    openModal(phoneLoginModal);
+                    return;
+                }
+                
                 const message = messageInput.value.trim();
                 if (message === '') return;
                 
@@ -1148,6 +1209,12 @@
             // Имитация голосового ввода
             let isRecording = false;
             voiceBtn.addEventListener('click', function() {
+                // Проверяем авторизацию
+                if (!checkAuth()) {
+                    openModal(phoneLoginModal);
+                    return;
+                }
+                
                 isRecording = !isRecording;
                 
                 if (isRecording) {
@@ -1174,8 +1241,11 @@
             
             // Добавление приветственного сообщения
             setTimeout(() => {
-                addMessage("Привет! Я ИИ-сонник. Опишите свой сон, и я помогу вам понять его значение.", 'bot');
+                addMessage("Привет! Я ИИ-сонник. Опишите свой сон, и я помогу вам понять его значение. Для начала работы войдите в аккаунт.", 'bot');
             }, 500);
+            
+            // Проверяем авторизацию при загрузке
+            checkAuth();
             
             // Создание звёзд
             createStars();
@@ -1183,4 +1253,3 @@
     </script>
 </body>
 </html>
-
