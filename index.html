@@ -7,14 +7,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --chat-bg: rgba(255, 255, 255, 0.95);
-            --user-msg: #667eea;
-            --bot-msg: #f8f9fa;
+            --primary-gradient: linear-gradient(135deg, #0c0c2b 0%, #1a1a3e 100%);
+            --chat-bg: rgba(25, 25, 50, 0.9);
+            --user-msg: #4a4a8a;
+            --bot-msg: #2d2d5a;
             --accent: #ff6b6b;
-            --text-primary: #2d3748;
-            --text-secondary: #4a5568;
-            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --text-primary: #f1f1f1;
+            --text-secondary: #b8b8d6;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             --radius: 18px;
         }
 
@@ -31,6 +31,30 @@
             display: flex;
             flex-direction: column;
             color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Анимация звёзд */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
         }
 
         /* Шапка */
@@ -52,6 +76,7 @@
 
         .logo i {
             font-size: 1.8rem;
+            color: #a78bfa;
         }
 
         .user-menu {
@@ -62,7 +87,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -73,22 +98,24 @@
 
         .user-icon:hover {
             transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .dropdown-menu {
             position: absolute;
             top: 50px;
             right: 0;
-            background: var(--chat-bg);
+            background: rgba(40, 40, 70, 0.95);
             border-radius: 12px;
             box-shadow: var(--shadow);
-            padding: 10px 0;
-            width: 180px;
+            padding: 15px 0;
+            width: 220px;
             opacity: 0;
             visibility: hidden;
             transform: translateY(10px);
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .user-menu:hover .dropdown-menu {
@@ -99,18 +126,26 @@
 
         .dropdown-menu button {
             width: 100%;
-            padding: 12px 20px;
+            padding: 15px 25px;
             border: none;
             background: none;
             text-align: left;
             cursor: pointer;
             transition: background 0.2s;
             color: var(--text-primary);
-            font-size: 0.95rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .dropdown-menu button:hover {
-            background: rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-menu i {
+            width: 20px;
+            text-align: center;
         }
 
         /* Основной чат */
@@ -118,21 +153,23 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            max-width: 800px;
-            width: 90%;
-            margin: 0 auto;
+            max-width: 900px;
+            width: 95%;
+            margin: 0 auto 100px;
             background: var(--chat-bg);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             overflow: hidden;
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 70vh;
         }
 
         .chat-header {
             padding: 1.5rem;
             text-align: center;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(40, 40, 70, 0.8);
         }
 
         .chat-header h2 {
@@ -149,7 +186,8 @@
             flex: 1;
             padding: 1.5rem;
             overflow-y: auto;
-            max-height: 60vh;
+            max-height: 65vh;
+            min-height: 400px;
         }
 
         .message {
@@ -168,11 +206,12 @@
         }
 
         .message-bubble {
-            max-width: 70%;
+            max-width: 75%;
             padding: 12px 18px;
             border-radius: var(--radius);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             line-height: 1.5;
+            position: relative;
         }
 
         .user-message .message-bubble {
@@ -200,6 +239,25 @@
             text-align: left;
         }
 
+        /* Кнопка озвучивания */
+        .tts-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            transition: all 0.2s;
+        }
+
+        .tts-btn:hover {
+            opacity: 1;
+            color: var(--accent);
+        }
+
         /* Skeleton loader */
         .skeleton {
             display: flex;
@@ -210,7 +268,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background: linear-gradient(90deg, #2d2d5a 25%, #3a3a6a 50%, #2d2d5a 75%);
             background-size: 200% 100%;
             animation: loading 1.5s infinite;
         }
@@ -223,7 +281,7 @@
             height: 12px;
             margin-bottom: 8px;
             border-radius: 4px;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background: linear-gradient(90deg, #2d2d5a 25%, #3a3a6a 50%, #2d2d5a 75%);
             background-size: 200% 100%;
             animation: loading 1.5s infinite;
         }
@@ -238,16 +296,23 @@
 
         /* Панель ввода */
         .input-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             padding: 1.5rem;
-            background: rgba(255, 255, 255, 0.8);
-            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            background: rgba(25, 25, 50, 0.9);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
+            z-index: 10;
         }
 
         .input-wrapper {
             display: flex;
             gap: 10px;
             align-items: flex-end;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .text-input {
@@ -255,19 +320,25 @@
             padding: 14px 18px;
             border: none;
             border-radius: 25px;
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            background: rgba(40, 40, 70, 0.9);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             font-size: 1rem;
             transition: all 0.3s ease;
             resize: none;
             max-height: 120px;
             min-height: 50px;
+            color: var(--text-primary);
         }
 
         .text-input:focus {
             outline: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             transform: scale(1.02);
+            background: rgba(50, 50, 90, 0.9);
+        }
+
+        .text-input::placeholder {
+            color: var(--text-secondary);
         }
 
         .action-buttons {
@@ -337,13 +408,13 @@
 
         @keyframes pulse {
             0% {
-                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
             }
             70% {
-                box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+                box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
             }
             100% {
-                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
             }
         }
 
@@ -359,8 +430,8 @@
         /* Адаптивность */
         @media (max-width: 768px) {
             .chat-container {
-                width: 95%;
-                height: 90vh;
+                width: 98%;
+                margin-bottom: 120px;
             }
 
             .message-bubble {
@@ -373,6 +444,10 @@
 
             .logo {
                 font-size: 1.2rem;
+            }
+            
+            .dropdown-menu {
+                width: 200px;
             }
         }
 
@@ -393,10 +468,22 @@
                 width: 45px;
                 height: 45px;
             }
+            
+            .dropdown-menu {
+                width: 180px;
+                padding: 10px 0;
+            }
+            
+            .dropdown-menu button {
+                padding: 12px 20px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Анимация звёзд -->
+    <div class="stars" id="stars"></div>
+
     <!-- Шапка -->
     <header>
         <div class="logo">
@@ -423,42 +510,20 @@
         
         <div class="chat-messages" id="chatMessages">
             <!-- Сообщения будут добавляться здесь -->
-            <div class="message bot-message">
-                <div class="message-bubble">
-                    Привет! Я ИИ-сонник. Опишите свой сон, и я помогу вам понять его значение.
-                    <div class="message-time">12:05</div>
-                </div>
-            </div>
-            
-            <div class="message user-message">
-                <div class="message-bubble">
-                    Приснилось, что я летаю над городом. Что это может означать?
-                    <div class="message-time">12:07</div>
-                </div>
-            </div>
-            
-            <div class="message bot-message">
-                <div class="message-bubble">
-                    Сны о полётах часто символизируют свободу, стремление к независимости или преодоление препятствий. 
-                    В вашем случае полёт над городом может означать желание взглянуть на свою жизнь со стороны, 
-                    оценить текущую ситуацию или стремление к новым достижениям.
-                    <div class="message-time">12:08</div>
-                </div>
-            </div>
         </div>
-        
-        <!-- Панель ввода -->
-        <div class="input-container">
-            <div class="input-wrapper">
-                <textarea class="text-input" id="messageInput" placeholder="Опишите свой сон..." rows="1"></textarea>
-                <div class="action-buttons">
-                    <button class="btn btn-voice" id="voiceBtn" aria-label="Голосовой ввод">
-                        <i class="fas fa-microphone"></i>
-                    </button>
-                    <button class="btn btn-send" id="sendBtn" aria-label="Отправить сообщение">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
+    </div>
+    
+    <!-- Панель ввода -->
+    <div class="input-container">
+        <div class="input-wrapper">
+            <textarea class="text-input" id="messageInput" placeholder="Опишите свой сон..." rows="1"></textarea>
+            <div class="action-buttons">
+                <button class="btn btn-voice" id="voiceBtn" aria-label="Голосовой ввод">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="btn btn-send" id="sendBtn" aria-label="Отправить сообщение">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -469,6 +534,35 @@
             const messageInput = document.getElementById('messageInput');
             const sendBtn = document.getElementById('sendBtn');
             const voiceBtn = document.getElementById('voiceBtn');
+            const starsContainer = document.getElementById('stars');
+            
+            // Создание анимации звёзд
+            function createStars() {
+                const starsCount = 100;
+                
+                for (let i = 0; i < starsCount; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    
+                    // Случайный размер от 1 до 3 пикселей
+                    const size = Math.random() * 2 + 1;
+                    star.style.width = `${size}px`;
+                    star.style.height = `${size}px`;
+                    
+                    // Случайная позиция
+                    star.style.left = `${Math.random() * 100}vw`;
+                    star.style.top = `${Math.random() * 100}vh`;
+                    
+                    // Случайная длительность анимации от 10 до 30 секунд
+                    const duration = Math.random() * 20 + 10;
+                    star.style.animationDuration = `${duration}s`;
+                    
+                    // Случайная задержка анимации
+                    star.style.animationDelay = `${Math.random() * 5}s`;
+                    
+                    starsContainer.appendChild(star);
+                }
+            }
             
             // Загрузка черновика из localStorage
             const savedDraft = localStorage.getItem('dreamDraft');
@@ -506,7 +600,8 @@
                 // Имитация ответа бота через 1-2 секунды
                 setTimeout(() => {
                     removeLoadingIndicator();
-                    addMessage(generateBotResponse(message), 'bot');
+                    const botResponse = generateBotResponse(message);
+                    addMessage(botResponse, 'bot');
                 }, 1500 + Math.random() * 1000);
             }
             
@@ -522,7 +617,25 @@
                 timeDiv.className = 'message-time';
                 timeDiv.textContent = getCurrentTime();
                 
-                bubbleDiv.innerHTML = text;
+                // Добавляем кнопку озвучивания для сообщений бота
+                if (sender === 'bot') {
+                    const ttsBtn = document.createElement('button');
+                    ttsBtn.className = 'tts-btn';
+                    ttsBtn.setAttribute('aria-label', 'Озвучить сообщение');
+                    ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                    ttsBtn.addEventListener('click', function() {
+                        // В будущем здесь будет синтез речи
+                        console.log('Озвучивание сообщения:', text);
+                        // Временная заглушка - выделение кнопки
+                        ttsBtn.style.color = 'var(--accent)';
+                        setTimeout(() => {
+                            ttsBtn.style.color = '';
+                        }, 1000);
+                    });
+                    bubbleDiv.appendChild(ttsBtn);
+                }
+                
+                bubbleDiv.innerHTML += text;
                 bubbleDiv.appendChild(timeDiv);
                 
                 messageDiv.appendChild(bubbleDiv);
@@ -629,6 +742,14 @@
                     messageInput.placeholder = "Опишите свой сон...";
                 }
             });
+            
+            // Добавление приветственного сообщения
+            setTimeout(() => {
+                addMessage("Привет! Я ИИ-сонник. Опишите свой сон, и я помогу вам понять его значение.", 'bot');
+            }, 500);
+            
+            // Создание звёзд
+            createStars();
         });
     </script>
 </body>
