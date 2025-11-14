@@ -12,6 +12,7 @@
             --user-msg: #4a4a8a;
             --bot-msg: #2d2d5a;
             --accent: #ff6b6b;
+            --accent-hover: #ff5252;
             --text-primary: #f1f1f1;
             --text-secondary: #b8b8d6;
             --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
@@ -116,6 +117,7 @@
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
         }
 
         .user-menu:hover .dropdown-menu {
@@ -380,6 +382,174 @@
             animation: pulse 1.5s infinite;
         }
 
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--chat-bg);
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 450px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: var(--accent);
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(40, 40, 70, 0.9);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
+        }
+
+        .form-button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 0.5rem;
+        }
+
+        .form-button:hover {
+            background: var(--accent-hover);
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-link {
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Планы оплаты */
+        .plans-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .plan-card {
+            background: rgba(40, 40, 70, 0.7);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        .plan-card.selected {
+            border-color: var(--accent);
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .plan-name {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .plan-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-features li {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+
+        .plan-features i {
+            color: var(--accent);
+        }
+
         /* Анимации */
         @keyframes slideInFromRight {
             0% {
@@ -449,6 +619,11 @@
             .dropdown-menu {
                 width: 200px;
             }
+            
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
         }
 
         @media (max-width: 480px) {
@@ -495,8 +670,9 @@
                 <i class="fas fa-user"></i>
             </div>
             <div class="dropdown-menu">
-                <button><i class="fas fa-sign-in-alt"></i> Войти</button>
-                <button><i class="fas fa-user-plus"></i> Зарегистрироваться</button>
+                <button id="loginBtn"><i class="fas fa-sign-in-alt"></i> Войти</button>
+                <button id="registerBtn"><i class="fas fa-user-plus"></i> Зарегистрироваться</button>
+                <button id="paymentBtn"><i class="fas fa-credit-card"></i> Оплатить</button>
             </div>
         </div>
     </header>
@@ -528,6 +704,95 @@
         </div>
     </div>
 
+    <!-- Модальное окно входа -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Вход в аккаунт</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="loginEmail">Email</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="Ваш email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword">Пароль</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="Ваш пароль" required>
+                </div>
+                <button type="submit" class="form-button">Войти</button>
+                <div class="form-footer">
+                    Нет аккаунта? <span class="form-link" id="showRegister">Зарегистрироваться</span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно регистрации -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Регистрация</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label" for="registerName">Имя</label>
+                    <input type="text" class="form-input" id="registerName" placeholder="Ваше имя" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="registerEmail">Email</label>
+                    <input type="email" class="form-input" id="registerEmail" placeholder="Ваш email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="registerPassword">Пароль</label>
+                    <input type="password" class="form-input" id="registerPassword" placeholder="Придумайте пароль" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="registerConfirmPassword">Подтвердите пароль</label>
+                    <input type="password" class="form-input" id="registerConfirmPassword" placeholder="Повторите пароль" required>
+                </div>
+                <button type="submit" class="form-button">Зарегистрироваться</button>
+                <div class="form-footer">
+                    Уже есть аккаунт? <span class="form-link" id="showLogin">Войти</span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно оплаты -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Выберите тариф</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="plans-container">
+                <div class="plan-card" data-plan="basic">
+                    <div class="plan-name">Базовый</div>
+                    <div class="plan-price">299 ₽/мес</div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> 50 толкований в месяц</li>
+                        <li><i class="fas fa-check"></i> Базовая интерпретация снов</li>
+                        <li><i class="fas fa-check"></i> Сохранение истории</li>
+                    </ul>
+                    <button class="form-button" data-plan="basic">Выбрать</button>
+                </div>
+                <div class="plan-card" data-plan="premium">
+                    <div class="plan-name">Премиум</div>
+                    <div class="plan-price">799 ₽/мес</div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> Неограниченные толкования</li>
+                        <li><i class="fas fa-check"></i> Расширенный анализ снов</li>
+                        <li><i class="fas fa-check"></i> Персональные рекомендации</li>
+                        <li><i class="fas fa-check"></i> Приоритетная поддержка</li>
+                    </ul>
+                    <button class="form-button" data-plan="premium">Выбрать</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const chatMessages = document.getElementById('chatMessages');
@@ -535,6 +800,17 @@
             const sendBtn = document.getElementById('sendBtn');
             const voiceBtn = document.getElementById('voiceBtn');
             const starsContainer = document.getElementById('stars');
+            
+            // Модальные окна
+            const loginModal = document.getElementById('loginModal');
+            const registerModal = document.getElementById('registerModal');
+            const paymentModal = document.getElementById('paymentModal');
+            const loginBtn = document.getElementById('loginBtn');
+            const registerBtn = document.getElementById('registerBtn');
+            const paymentBtn = document.getElementById('paymentBtn');
+            const showRegister = document.getElementById('showRegister');
+            const showLogin = document.getElementById('showLogin');
+            const closeButtons = document.querySelectorAll('.close-modal');
             
             // Создание анимации звёзд
             function createStars() {
@@ -564,6 +840,115 @@
                 }
             }
             
+            // Управление модальными окнами
+            function openModal(modal) {
+                modal.classList.add('active');
+            }
+            
+            function closeModal(modal) {
+                modal.classList.remove('active');
+            }
+            
+            function closeAllModals() {
+                closeModal(loginModal);
+                closeModal(registerModal);
+                closeModal(paymentModal);
+            }
+            
+            // Обработчики модальных окон
+            loginBtn.addEventListener('click', () => openModal(loginModal));
+            registerBtn.addEventListener('click', () => openModal(registerModal));
+            paymentBtn.addEventListener('click', () => openModal(paymentModal));
+            showRegister.addEventListener('click', () => {
+                closeModal(loginModal);
+                openModal(registerModal);
+            });
+            showLogin.addEventListener('click', () => {
+                closeModal(registerModal);
+                openModal(loginModal);
+            });
+            
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    closeModal(modal);
+                });
+            });
+            
+            // Закрытие модальных окон при клике вне их области
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    closeAllModals();
+                }
+            });
+            
+            // Обработка форм
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Здесь должна быть реальная логинация
+                alert('Вход выполнен успешно!');
+                closeModal(loginModal);
+            });
+            
+            document.getElementById('registerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Здесь должна быть реальная регистрация
+                alert('Регистрация прошла успешно!');
+                closeModal(registerModal);
+            });
+            
+            // Обработка выбора плана оплаты
+            document.querySelectorAll('.plan-card .form-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const plan = this.getAttribute('data-plan');
+                    processPayment(plan);
+                });
+            });
+            
+            // Функция обработки оплаты
+            function processPayment(plan) {
+                // В реальном приложении здесь будет запрос к серверу для создания платежа
+                // Для демонстрации используем Robokassa
+                const merchant_login = "demo";
+                const password_1 = "password_1";
+                const invid = Math.floor(Math.random() * 1000);
+                const description = `Тариф "${plan === 'basic' ? 'Базовый' : 'Премиум'}" для ИИ Сонник`;
+                const sum = plan === 'basic' ? "299" : "799";
+                const signature_value = md5(`${merchant_login}:${sum}:${invid}:${password_1}`);
+                
+                // Создаем форму для отправки в Robokassa
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'https://auth.robokassa.ru/Merchant/Index.aspx';
+                
+                const fields = {
+                    'MerchantLogin': merchant_login,
+                    'OutSum': sum,
+                    'InvId': invid,
+                    'Description': description,
+                    'SignatureValue': signature_value,
+                    'IsTest': 1 // Тестовый режим
+                };
+                
+                for (const key in fields) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = fields[key];
+                    form.appendChild(input);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+            
+            // Простая реализация md5 для демонстрации
+            function md5(input) {
+                // В реальном приложении используйте надежную библиотеку md5
+                // Это упрощенная версия для демонстрации
+                return 'demo_signature_' + input.length;
+            }
+            
             // Загрузка черновика из localStorage
             const savedDraft = localStorage.getItem('dreamDraft');
             if (savedDraft) {
@@ -582,7 +967,7 @@
             });
             
             // Отправка сообщения
-            function sendMessage() {
+            async function sendMessage() {
                 const message = messageInput.value.trim();
                 if (message === '') return;
                 
@@ -597,12 +982,16 @@
                 // Показать индикатор загрузки
                 showLoadingIndicator();
                 
-                // Имитация ответа бота через 1-2 секунды
-                setTimeout(() => {
+                try {
+                    // Получение ответа от AI модели
+                    const botResponse = await getAIResponse(message);
                     removeLoadingIndicator();
-                    const botResponse = generateBotResponse(message);
                     addMessage(botResponse, 'bot');
-                }, 1500 + Math.random() * 1000);
+                } catch (error) {
+                    removeLoadingIndicator();
+                    addMessage('Извините, произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.', 'bot');
+                    console.error('Ошибка:', error);
+                }
             }
             
             // Добавление сообщения в чат
@@ -645,6 +1034,61 @@
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
             
+            // Получение ответа от AI модели
+            async function getAIResponse(userMessage) {
+                // В реальном приложении замените на ваш API ключ
+                const apiKey = 'YOUR_OPENROUTER_API_KEY';
+                
+                if (apiKey === 'YOUR_OPENROUTER_API_KEY') {
+                    // Демо-режим, если API ключ не установлен
+                    return generateDemoResponse(userMessage);
+                }
+                
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                        'HTTP-Referer': window.location.href,
+                        'X-Title': 'ИИ Сонник'
+                    },
+                    body: JSON.stringify({
+                        "model": "deepseek/deepseek-chat-v3-0324",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "Ты - опытный толкователь снов. Твоя задача - анализировать сны, которые описывают пользователи, и давать им психологическую интерпретацию. Будь внимательным к деталям и давай развернутые, но понятные объяснения."
+                            },
+                            {
+                                "role": "user",
+                                "content": userMessage
+                            }
+                        ]
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка API: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data.choices[0].message.content;
+            }
+            
+            // Демо-ответы, если API ключ не установлен
+            function generateDemoResponse(userMessage) {
+                const responses = [
+                    "Интересный сон! На основе анализа тысяч сновидений, могу сказать, что такой сон часто связан с эмоциональным состоянием. Возможно, вы переживаете о чем-то или испытываете внутреннее напряжение.",
+                    "Толкование вашего сна указывает на внутренние переживания или нерешенные вопросы. Это может быть отражением вашего подсознания, которое пытается обработать дневные впечатления.",
+                    "Согласно сонникам, подобные сны часто связаны с поиском себя или своего места в жизни. Возможно, вам стоит обратить внимание на текущие цели и приоритеты.",
+                    "Ваш сон может отражать скрытые желания или страхи, которые требуют внимания. Попробуйте проанализировать, какие эмоции вы испытывали во сне - это может быть ключом к пониманию.",
+                    "Интерпретация такого сна обычно связана с переменами, которые происходят или скоро произойдут в вашей жизни. Будьте открыты новым возможностям.",
+                    "Этот сон может быть отражением вашего творческого потенциала или нереализованных идей. Возможно, пришло время выразить себя в каком-то новом качестве."
+                ];
+                
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+            
             // Показать индикатор загрузки
             function showLoadingIndicator() {
                 const skeletonDiv = document.createElement('div');
@@ -683,21 +1127,6 @@
                 if (indicator) {
                     indicator.remove();
                 }
-            }
-            
-            // Генерация ответа бота
-            function generateBotResponse(userMessage) {
-                const responses = [
-                    "Интересный сон! Это может символизировать новые возможности или изменения в вашей жизни.",
-                    "На основе анализа тысяч сновидений, могу сказать, что такой сон часто связан с эмоциональным состоянием.",
-                    "Толкование вашего сна указывает на внутренние переживания или нерешенные вопросы.",
-                    "Согласно сонникам, подобные сны часто связаны с поиском себя или своего места в жизни.",
-                    "Ваш сон может отражать скрытые желания или страхи, которые требуют внимания.",
-                    "Интерпретация такого сна обычно связана с переменами, которые происходят или скоро произойдут в вашей жизни.",
-                    "Этот сон может быть отражением вашего творческого потенциала или нереализованных идей."
-                ];
-                
-                return responses[Math.floor(Math.random() * responses.length)];
             }
             
             // Получить текущее время
