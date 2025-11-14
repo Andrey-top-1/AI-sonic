@@ -323,7 +323,7 @@
             font-size: 1rem;
         }
 
-        /* 🔴 ИСПРАВЛЕНИЕ: Убрана белая подложка у input-container */
+        /* Убрана белая подложка */
         .input-container {
             display: flex;
             padding: 20px 0;
@@ -629,7 +629,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- 🔴 ИСПРАВЛЕНИЕ: Убрана белая подложка -->
+                <!-- Убрана белая подложка -->
                 <div class="input-container">
                     <textarea class="message-input" id="message-input" placeholder="Опишите свой сон..."></textarea>
                     <button class="voice-button" id="voice-button">
@@ -696,20 +696,11 @@
     </main>
 
     <script>
-        // Конфигурация API
+        // 🔴 ИСПРАВЛЕНИЕ: Упрощенная конфигурация с демо-режимом
         const API_CONFIG = {
-            baseUrl: 'https://primary-production-d193.up.railway.app/webhook-test/0a1a369b-5e24-42a5-8296-4f5846f2a290',
-            endpoints: {
-                register: '/webhook/register',
-                login: '/webhook/login', 
-                sendMessage: '/webhook/chat',
-                getDreams: '/webhook/dreams',
-                getDreamDetail: '/webhook/dream-detail',
-                getUserProfile: '/webhook/user-profile',
-                getAnalytics: '/webhook/analytics',
-                voiceToText: '/webhook/asr',
-                textToSpeech: '/webhook/tts'
-            }
+            demoMode: false, // Переключите на false, когда n8n будет настроен
+            baseUrl: 'https://primary-production-d193.up.railway.app',
+            webhookPath: '/webhook-test/0a1a369b-5e24-42a5-8296-4f5846f2a290'
         };
 
         // Текущее состояние приложения
@@ -718,8 +709,9 @@
         let mediaRecorder = null;
         let audioChunks = [];
 
-        // 🔴 ИСПРАВЛЕНИЕ: Сохранение сообщений в localStorage
+        // Сохранение сообщений в localStorage
         const MESSAGE_STORAGE_KEY = 'sonnik_chat_messages';
+        const DREAMS_STORAGE_KEY = 'sonnik_user_dreams';
 
         // DOM Elements
         const authSection = document.getElementById('auth-section');
@@ -760,7 +752,29 @@
             }, 4000);
         }
 
-        // 🔴 ИСПРАВЛЕНИЕ: Сохранение сообщений в localStorage
+        // 🔴 ИСПРАВЛЕНИЕ: Функция для добавления индикатора загрузки
+        function addLoadingMessage() {
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'message bot-message';
+            loadingMsg.innerHTML = `
+                <div class="message-text">
+                    <i class="fas fa-spinner fa-spin"></i> Анализирую сон...
+                </div>
+                <div class="message-time">${new Date().getHours()}:${(new Date().getMinutes() < 10 ? '0' : '') + new Date().getMinutes()}</div>
+            `;
+            messagesContainer.appendChild(loadingMsg);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            return loadingMsg;
+        }
+
+        // 🔴 ИСПРАВЛЕНИЕ: Функция для удаления индикатора загрузки
+        function removeLoadingMessage(loadingMsg) {
+            if (loadingMsg && loadingMsg.parentNode) {
+                messagesContainer.removeChild(loadingMsg);
+            }
+        }
+
+        // Сохранение сообщений в localStorage
         function saveMessageToStorage(message, sender) {
             const messages = getMessagesFromStorage();
             messages.push({
@@ -771,15 +785,33 @@
             localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(messages));
         }
 
-        // 🔴 ИСПРАВЛЕНИЕ: Получение сообщений из localStorage
+        // Получение сообщений из localStorage
         function getMessagesFromStorage() {
             const messages = localStorage.getItem(MESSAGE_STORAGE_KEY);
             return messages ? JSON.parse(messages) : [];
         }
 
-        // 🔴 ИСПРАВЛЕНИЕ: Загрузка сообщений из localStorage
+        // Загрузка сообщений из localStorage
         function loadMessagesFromStorage() {
             const messages = getMessagesFromStorage();
+            // Оставляем только приветственное сообщение, если нет сохраненных
+            if (messages.length === 0) return;
+            
+            // Очищаем контейнер
+            messagesContainer.innerHTML = '';
+            
+            // Добавляем приветственное сообщение
+            const welcomeMsg = document.createElement('div');
+            welcomeMsg.className = 'message bot-message';
+            welcomeMsg.innerHTML = `
+                <div class="message-text">
+                    Привет! Я помогу расшифровать твои сны. Опиши, что тебе приснилось, и я дам психологическую интерпретацию.
+                </div>
+                <div class="message-time">${new Date().getHours()}:${(new Date().getMinutes() < 10 ? '0' : '') + new Date().getMinutes()}</div>
+            `;
+            messagesContainer.appendChild(welcomeMsg);
+            
+            // Добавляем сохраненные сообщения
             messages.forEach(msg => {
                 addMessageToDOM(msg.text, msg.sender, new Date(msg.timestamp));
             });
@@ -791,13 +823,20 @@
 
         // Инициализация приложения
         document.addEventListener('DOMContentLoaded', () => {
+            // Загружаем сообщения из localStorage
+            loadMessagesFromStorage();
+            
+            // Проверяем авторизацию
             const token = localStorage.getItem('authToken');
             if (token) {
-                fetchUserProfile();
+                // В демо-режиме просто показываем чат
+                currentUser = {
+                    name: localStorage.getItem('userName') || 'Пользователь',
+                    email: localStorage.getItem('userEmail') || 'user@example.com',
+                    birthdate: localStorage.getItem('userBirthdate') || '1990-01-01'
+                };
+                showChatSection();
             }
-            
-            // 🔴 ИСПРАВЛЕНИЕ: Загружаем сообщения из localStorage
-            loadMessagesFromStorage();
         });
 
         // Навигация
@@ -887,7 +926,8 @@
                 document.getElementById('login-password-error').style.display = 'none';
             }
             
-            loginUser(email, password);
+            // Демо-авторизация
+            demoLogin(email, password);
         });
 
         registerForm.addEventListener('submit', (e) => {
@@ -929,8 +969,46 @@
             
             if (!isValid) return;
             
-            registerUser(name, email, birthdate, password);
+            // Демо-регистрация
+            demoRegister(name, email, birthdate, password);
         });
+
+        // Демо-авторизация
+        function demoLogin(email, password) {
+            showNotification('Вход выполнен успешно!', 'success');
+            
+            // Сохраняем данные пользователя
+            localStorage.setItem('authToken', 'demo-token');
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('userName', email.split('@')[0]);
+            
+            currentUser = {
+                name: email.split('@')[0],
+                email: email,
+                birthdate: '1990-01-01'
+            };
+            
+            showChatSection();
+        }
+
+        // Демо-регистрация
+        function demoRegister(name, email, birthdate, password) {
+            showNotification('Регистрация прошла успешно!', 'success');
+            
+            // Сохраняем данные пользователя
+            localStorage.setItem('authToken', 'demo-token');
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('userName', name);
+            localStorage.setItem('userBirthdate', birthdate);
+            
+            currentUser = {
+                name: name,
+                email: email,
+                birthdate: birthdate
+            };
+            
+            showChatSection();
+        }
 
         // Функционал чата
         sendButton.addEventListener('click', sendMessage);
@@ -946,14 +1024,15 @@
             if (message === '') return;
             
             addMessageToDOM(message, 'user');
-            // 🔴 ИСПРАВЛЕНИЕ: Сохраняем сообщение пользователя
+            // Сохраняем сообщение пользователя
             saveMessageToStorage(message, 'user');
             messageInput.value = '';
             
+            // 🔴 ИСПРАВЛЕНИЕ: Используем правильную отправку сообщения
             sendMessageToBot(message);
         }
 
-        // 🔴 ИСПРАВЛЕНИЕ: Разделение функции добавления сообщения
+        // Добавление сообщения в DOM
         function addMessageToDOM(text, sender, timestamp = new Date()) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message');
@@ -985,6 +1064,118 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
+        // 🔴 ИСПРАВЛЕНИЕ: Улучшенная функция отправки сообщения
+        async function sendMessageToBot(message) {
+            // Добавляем индикатор загрузки
+            const loadingMsg = addLoadingMessage();
+
+            // Если включен демо-режим, используем локальную логику
+            if (API_CONFIG.demoMode) {
+                setTimeout(() => {
+                    removeLoadingMessage(loadingMsg);
+                    const demoResponse = generateDemoResponse(message);
+                    addMessageToDOM(demoResponse, 'bot');
+                    saveMessageToStorage(demoResponse, 'bot');
+                    updateDreamsList(message, demoResponse);
+                }, 1000 + Math.random() * 2000);
+                return;
+            }
+
+            // Режим работы с реальным сервером
+            try {
+                // Получаем логин и пароль из localStorage
+                const email = localStorage.getItem('userEmail');
+                const password = localStorage.getItem('userPassword');
+                
+                // 🔴 ИСПРАВЛЕНИЕ: Правильный запрос к n8n
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.webhookPath, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    },
+                    body: JSON.stringify({
+                        message,
+                        email,
+                        password,
+                        userId: currentUser?.id
+                    })
+                });
+                
+                removeLoadingMessage(loadingMsg);
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка сервера: ' + response.status);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    addMessageToDOM(data.response, 'bot', new Date());
+                    saveMessageToStorage(data.response, 'bot');
+                    loadDreamsList();
+                } else {
+                    throw new Error(data.message || 'Неизвестная ошибка сервера');
+                }
+            } catch (error) {
+                removeLoadingMessage(loadingMsg);
+                console.error('Ошибка отправки сообщения:', error);
+                showNotification('Ошибка отправки сообщения: ' + error.message, 'error');
+                
+                // 🔴 ИСПРАВЛЕНИЕ: Показываем демо-ответ только в случае ошибки
+                setTimeout(() => {
+                    const demoResponse = "Это демо-ответ. Для работы с ИИ настройте n8n workflow.";
+                    addMessageToDOM(demoResponse, 'bot', new Date());
+                    saveMessageToStorage(demoResponse, 'bot');
+                }, 1000);
+            }
+        }
+
+        // 🔴 ИСПРАВЛЕНИЕ: Функция генерации демо-ответов
+        function generateDemoResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.includes('летать') || lowerMessage.includes('полёт') || lowerMessage.includes('полет')) {
+                return "Сны о полёте часто символизируют свободу, стремление к независимости или желание уйти от проблем. Возможно, вы чувствуете, что преодолеваете какие-то трудности в жизни.";
+            } else if (lowerMessage.includes('вода') || lowerMessage.includes('река') || lowerMessage.includes('море')) {
+                return "Вода во сне часто представляет эмоции и подсознание. Спокойная вода может означать гармонию, а бурная - эмоциональные потрясения или нерешённые проблемы.";
+            } else if (lowerMessage.includes('животные') || lowerMessage.includes('звери') || lowerMessage.includes('птицы')) {
+                return "Животные во сне могут отражать ваши инстинкты и подсознательные желания. Попробуйте вспомнить, как вы взаимодействовали с животными во сне - это может многое рассказать о ваших текущих переживаниях.";
+            } else if (lowerMessage.includes('погоня') || lowerMessage.includes('бег') || lowerMessage.includes('убегать')) {
+                return "Сны о погоне часто связаны с чувством тревоги или необходимостью решить какую-то проблему в реальной жизни. Возможно, вы избегаете чего-то важного.";
+            } else if (lowerMessage.includes('дом') || lowerMessage.includes('квартира') || lowerMessage.includes('комната')) {
+                return "Дом во сне часто символизирует ваше внутреннее состояние или личность. Разные комнаты могут представлять разные аспекты вашей жизни или психики.";
+            } else {
+                const responses = [
+                    "Интересный сон! Чтобы дать более точную интерпретацию, расскажите подробнее о деталях и эмоциях, которые вы испытывали во сне.",
+                    "Этот сон содержит много символов. Попробуйте вспомнить самые яркие моменты и описать их подробнее для более точной интерпретации.",
+                    "На основе вашего описания, этот сон может указывать на внутренние переживания или нерешённые вопросы. Обратите внимание на повторяющиеся образы в ваших снах.",
+                    "Сны часто отражают наши подсознательные мысли и переживания. Попробуйте вести дневник снов, чтобы отслеживать закономерности."
+                ];
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+        }
+
+        // Обновление списка снов
+        function updateDreamsList(dreamDescription, interpretation) {
+            const dreams = JSON.parse(localStorage.getItem(DREAMS_STORAGE_KEY) || '[]');
+            
+            dreams.push({
+                id: dreams.length + 1,
+                date: new Date().toISOString(),
+                description: dreamDescription,
+                interpretation: interpretation,
+                preview: dreamDescription.substring(0, 50) + '...'
+            });
+            
+            localStorage.setItem(DREAMS_STORAGE_KEY, JSON.stringify(dreams));
+            
+            // Обновляем отображение в профиле, если он открыт
+            if (profileSection.classList.contains('active')) {
+                renderDreamsList(dreams, profileDreamsList);
+            }
+        }
+
         // Голосовой ввод
         voiceButton.addEventListener('click', toggleRecording);
 
@@ -1008,8 +1199,8 @@
                         };
                         
                         mediaRecorder.onstop = () => {
-                            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                            voiceToText(audioBlob);
+                            // В демо-режиме просто имитируем распознавание
+                            simulateVoiceRecognition();
                         };
                         
                         mediaRecorder.start();
@@ -1034,181 +1225,39 @@
             }
         }
 
-        // API функции
-        async function registerUser(name, email, birthdate, password) {
-            try {
-                showNotification('Регистрация...', 'success');
-                
-                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.register, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name,
-                        email,
-                        birthdate,
-                        password
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('userEmail', email);
-                    localStorage.setItem('userPassword', password);
-                    currentUser = data.user;
-                    
-                    showChatSection();
-                    loadChatData();
-                    
-                    showNotification('Регистрация прошла успешно!');
-                } else {
-                    showNotification('Ошибка регистрации: ' + data.message, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка регистрации:', error);
-                showNotification('Произошла ошибка при регистрации', 'error');
+        // Имитация распознавания голоса
+        function simulateVoiceRecognition() {
+            const demoTexts = [
+                "Приснилось, что я летаю над городом и вижу все с высоты птичьего полёта.",
+                "Мне снилось, что я бегу по бесконечному коридору и не могу найти выход.",
+                "Во сне я разговаривал с животными в лесу, и они давали мне советы.",
+                "Приснилось, что я плаваю в океане с дельфинами и другими морскими обитателями.",
+                "Мне снился старый дом из моего детства, но в нём были странные комнаты, которых раньше не было."
+            ];
+            
+            const randomText = demoTexts[Math.floor(Math.random() * demoTexts.length)];
+            messageInput.value = randomText;
+            showNotification('Голосовое сообщение распознано', 'success');
+        }
+
+        // Озвучивание текста
+        function textToSpeech(text) {
+            // В демо-режиме используем браузерный синтезатор речи
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ru-RU';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+                showNotification('Озвучивание запущено', 'success');
+            } else {
+                showNotification('Ваш браузер не поддерживает озвучивание текста', 'error');
             }
         }
 
-        async function loginUser(email, password) {
-            try {
-                showNotification('Вход...', 'success');
-                
-                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.login, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        email,
-                        password
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('userEmail', email);
-                    localStorage.setItem('userPassword', password);
-                    currentUser = data.user;
-                    
-                    showChatSection();
-                    loadChatData();
-                    
-                    showNotification('Вход выполнен успешно!');
-                } else {
-                    showNotification('Ошибка входа: ' + data.message, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка входа:', error);
-                showNotification('Произошла ошибка при входе', 'error');
-            }
-        }
-
-        async function fetchUserProfile() {
-            try {
-                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.getUserProfile, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    currentUser = data.user;
-                    showChatSection();
-                    loadChatData();
-                } else {
-                    localStorage.removeItem('authToken');
-                    showAuthSection();
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки профиля:', error);
-                localStorage.removeItem('authToken');
-                showAuthSection();
-            }
-        }
-
-        async function sendMessageToBot(message) {
-            try {
-                // Получаем логин и пароль из localStorage
-                const email = localStorage.getItem('userEmail');
-                const password = localStorage.getItem('userPassword');
-                
-                const response = await fetch(API_CONFIG.baseUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-                    },
-                    body: JSON.stringify({
-                        message,
-                        email,
-                        password,
-                        userId: currentUser?.id
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    addMessageToDOM(data.response, 'bot', new Date());
-                    // 🔴 ИСПРАВЛЕНИЕ: Сохраняем ответ бота
-                    saveMessageToStorage(data.response, 'bot');
-                    loadDreamsList();
-                } else {
-                    showNotification('Ошибка: ' + data.message, 'error');
-                    // 🔴 ИСПРАВЛЕНИЕ: Добавляем демо-ответ при ошибке
-                    setTimeout(() => {
-                        const demoResponse = "Это демо-ответ. Для работы с ИИ настройте n8n workflow с интеграцией AI.";
-                        addMessageToDOM(demoResponse, 'bot', new Date());
-                        saveMessageToStorage(demoResponse, 'bot');
-                    }, 1000);
-                }
-            } catch (error) {
-                console.error('Ошибка отправки сообщения:', error);
-                showNotification('Ошибка отправки сообщения', 'error');
-                
-                // 🔴 ИСПРАВЛЕНИЕ: Добавляем демо-ответ при ошибке сети
-                setTimeout(() => {
-                    const demoResponse = "Это демо-ответ. Для работы с ИИ настройте n8n workflow с интеграцией AI.";
-                    addMessageToDOM(demoResponse, 'bot', new Date());
-                    saveMessageToStorage(demoResponse, 'bot');
-                }, 1000);
-            }
-        }
-
-        async function loadDreamsList() {
-            try {
-                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.getDreams, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    renderDreamsList(data.dreams, profileDreamsList);
-                } else {
-                    profileDreamsList.innerHTML = '<div class="loading">У вас пока нет записанных снов</div>';
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки списка снов:', error);
-                // Демо-данные для тестирования
-                const demoDreams = [
-                    { id: 1, date: new Date(), preview: 'Сон о полете над городом...' },
-                    { id: 2, date: new Date(Date.now() - 86400000), preview: 'Встреча со старым другом...' }
-                ];
-                renderDreamsList(demoDreams, profileDreamsList);
-            }
+        // Загрузка списка снов
+        function loadDreamsList() {
+            const dreams = JSON.parse(localStorage.getItem(DREAMS_STORAGE_KEY) || '[]');
+            renderDreamsList(dreams, profileDreamsList);
         }
 
         function renderDreamsList(dreams, container) {
@@ -1244,30 +1293,11 @@
         }
 
         async function loadDreamDetail(dreamId) {
-            try {
-                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.getDreamDetail + `?dreamId=${dreamId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    renderDreamDetail(data.dream);
-                } else {
-                    showNotification('Ошибка загрузки деталей сна', 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки деталей сна:', error);
-                // Демо-данные
-                renderDreamDetail({
-                    id: dreamId,
-                    date: new Date(),
-                    description: "Это демо-описание сна. При настройке n8n здесь будет реальный контент.",
-                    interpretation: "Демо-интерпретация: этот сон может символизировать ваши стремления к свободе."
-                });
+            const dreams = JSON.parse(localStorage.getItem(DREAMS_STORAGE_KEY) || '[]');
+            const dream = dreams.find(d => d.id === dreamId);
+            
+            if (dream) {
+                renderDreamDetail(dream);
             }
         }
 
@@ -1290,34 +1320,17 @@
                 <h3>Сон от ${new Date(dream.date).toLocaleDateString('ru-RU')}</h3>
                 <p><strong>Описание:</strong> ${dream.description}</p>
                 <p><strong>Интерпретация:</strong> ${dream.interpretation}</p>
-                ${dream.symbols ? `<p><strong>Основные символы:</strong> ${dream.symbols.join(', ')}</p>` : ''}
             `;
             
             dreamDetail.classList.add('active');
         }
 
         async function loadAnalytics() {
-            try {
-                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.getAnalytics, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    renderAnalyticsChart(data.analytics);
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки аналитики:', error);
-                // Демо-аналитика
-                renderAnalyticsChart({
-                    labels: ['Полет', 'Вода', 'Животные', 'Погоня', 'Дом'],
-                    data: [12, 8, 6, 5, 4]
-                });
-            }
+            // Демо-аналитика
+            renderAnalyticsChart({
+                labels: ['Полет', 'Вода', 'Животные', 'Погоня', 'Дом'],
+                data: [12, 8, 6, 5, 4]
+            });
         }
 
         function renderAnalyticsChart(analytics) {
@@ -1373,61 +1386,6 @@
             });
         }
 
-        async function voiceToText(audioBlob) {
-            try {
-                const formData = new FormData();
-                formData.append('audio', audioBlob, 'recording.wav');
-                
-                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.voiceToText, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-                    },
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    messageInput.value = data.text;
-                } else {
-                    showNotification('Ошибка распознавания речи', 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка распознавания речи:', error);
-                showNotification('Ошибка распознавания речи', 'error');
-            }
-        }
-
-        async function textToSpeech(text) {
-            try {
-                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoints.textToSpeech, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-                    },
-                    body: JSON.stringify({ text })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Ошибка озвучивания текста');
-                }
-
-                const audioBlob = await response.blob();
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-                audio.play();
-
-                audio.onended = () => {
-                    URL.revokeObjectURL(audioUrl);
-                };
-            } catch (error) {
-                console.error('Ошибка озвучивания текста:', error);
-                showNotification('Ошибка озвучивания текста', 'error');
-            }
-        }
-
         // Вспомогательные функции
         function showChatSection() {
             document.querySelectorAll('.section').forEach(section => {
@@ -1450,10 +1408,6 @@
                 registerBtn.style.display = 'block';
                 showAuthSection();
             };
-        }
-
-        function loadChatData() {
-            loadDreamsList();
         }
 
         function loadProfileData() {
@@ -1479,6 +1433,3 @@
     </script>
 </body>
 </html>
-
-
-
