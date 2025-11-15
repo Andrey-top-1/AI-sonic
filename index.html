@@ -866,11 +866,12 @@
         }
 
         async textToSpeech(text) {
-            // Always use browser TTS - server TTS is disabled
-            return { 
-                success: false, 
-                message: 'Используется браузерная озвучка' 
-            };
+            const response = await fetch('/api/text-to-speech', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+            return await response.json();
         }
 
         async createPayment(plan) {
@@ -985,7 +986,7 @@
         try {
             const result = await apiClient.getChatHistory(currentUser);
             
-            if (result.history) {
+            if (result.success && result.history) {
                 const chatMessages = document.getElementById('chatMessages');
                 chatMessages.innerHTML = '';
                 
@@ -1064,7 +1065,7 @@
 
     async function textToSpeech(text) {
         try {
-            // Используем только браузерный Web Speech API
+            // Используем встроенный Web Speech API браузера
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'ru-RU';
@@ -1088,12 +1089,12 @@
 
                 utterance.onerror = function(event) {
                     console.error('Speech synthesis error:', event);
-                    showNotification('Ошибка озвучки в браузере', 'error');
+                    showNotification('Озвучка не поддерживается в этом браузере', 'error');
                 };
 
                 speechSynthesis.speak(utterance);
             } else {
-                showNotification('Ваш браузер не поддерживает озвучку', 'error');
+                showNotification('Озвучка не поддерживается в этом браузере', 'error');
             }
         } catch (error) {
             console.error('TTS error:', error);
@@ -1329,5 +1330,6 @@
 </script>
 </body>
 </html>
+
 
 
