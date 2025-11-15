@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fetch = require('node-fetch');
+const sqlite3 = require('sqlite3').verbose();
+const { open } = require('sqlite');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -16,26 +18,78 @@ app.use(express.static(path.join(__dirname)));
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "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";
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    message: 'Server is running',
-    timestamp: new Date().toISOString()
-  });
-});
+// Инициализация базы данных
+let db;
 
-// База данных в памяти
-const memoryDB = {
-  users: [],
-  messages: [],
-  chats: []
-};
+async function initializeDatabase() {
+  try {
+    db = await open({
+      filename: './dream_interpreter.db',
+      driver: sqlite3.Database
+    });
 
-// Генератор ID
-function generateId() {
-  return Date.now() + Math.random().toString(36).substr(2, 9);
+    // Создаем таблицы если они не существуют
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phone TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        birth_date TEXT NOT NULL,
+        password TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    `);
+
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS chats (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        chat_type TEXT NOT NULL,
+        telegram_chat_id TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    `);
+
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        chat_id INTEGER NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        FOREIGN KEY (chat_id) REFERENCES chats (id)
+      )
+    `);
+
+    console.log('✅ Database initialized successfully');
+  } catch (error) {
+    console.error('❌ Database initialization error:', error);
+    throw error;
+  }
 }
+
+// Health check endpoint
+app.get('/health', async (req, res) => {
+  try {
+    // Проверяем соединение с базой данных
+    await db.get('SELECT 1 as test');
+    
+    res.status(200).json({ 
+      status: 'OK', 
+      message: 'Server and database are running',
+      timestamp: new Date().toISOString(),
+      database: 'Connected'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'ERROR', 
+      message: 'Database connection failed',
+      timestamp: new Date().toISOString(),
+      database: 'Disconnected'
+    });
+  }
+});
 
 // Функция для расчета возраста
 function calculateAge(birthDate) {
@@ -160,7 +214,11 @@ app.post('/api/register', async (req, res) => {
     }
 
     // Проверка на существующего пользователя
-    const existingUser = memoryDB.users.find(u => u.phone === phone);
+    const existingUser = await db.get(
+      'SELECT id FROM users WHERE phone = ?',
+      [phone]
+    );
+
     if (existingUser) {
       return res.json({
         success: false,
@@ -168,30 +226,26 @@ app.post('/api/register', async (req, res) => {
       });
     }
 
-    const newUser = {
-      id: generateId(),
-      phone,
-      name,
-      birth_date,
-      password,
-      created_at: new Date().toISOString()
-    };
-    
-    memoryDB.users.push(newUser);
-    
+    // Создаем нового пользователя
+    const result = await db.run(
+      `INSERT INTO users (phone, name, birth_date, password, created_at) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [phone, name, birth_date, password, new Date().toISOString()]
+    );
+
+    const userId = result.lastID;
+
     // Создаем чат для пользователя
-    const newChat = {
-      id: generateId(),
-      user_id: newUser.id,
-      chat_type: 'web',
-      created_at: new Date().toISOString()
-    };
-    memoryDB.chats.push(newChat);
+    await db.run(
+      `INSERT INTO chats (user_id, chat_type, created_at) 
+       VALUES (?, ?, ?)`,
+      [userId, 'web', new Date().toISOString()]
+    );
     
     res.json({
       success: true,
       message: 'Регистрация прошла успешно!',
-      user_id: newUser.id
+      user_id: userId
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -213,7 +267,10 @@ app.post('/api/login', async (req, res) => {
       });
     }
 
-    const user = memoryDB.users.find(u => u.phone === phone && u.password === password);
+    const user = await db.get(
+      'SELECT id, phone, name, birth_date, password, created_at FROM users WHERE phone = ? AND password = ?',
+      [phone, password]
+    );
     
     if (user) {
       res.json({
@@ -253,7 +310,11 @@ app.post('/api/send-message', async (req, res) => {
     }
 
     // Находим пользователя
-    const user = memoryDB.users.find(u => u.id === user_data.id);
+    const user = await db.get(
+      'SELECT id, phone, name, birth_date FROM users WHERE id = ?',
+      [user_data.id]
+    );
+
     if (!user) {
       return res.json({
         success: false,
@@ -262,31 +323,34 @@ app.post('/api/send-message', async (req, res) => {
     }
 
     // Находим или создаем чат
-    let chat = memoryDB.chats.find(c => c.user_id === user.id && c.chat_type === 'web');
+    let chat = await db.get(
+      'SELECT id FROM chats WHERE user_id = ? AND chat_type = ?',
+      [user.id, 'web']
+    );
+
     if (!chat) {
-      chat = {
-        id: generateId(),
-        user_id: user.id,
-        chat_type: 'web',
-        created_at: new Date().toISOString()
-      };
-      memoryDB.chats.push(chat);
+      const chatResult = await db.run(
+        'INSERT INTO chats (user_id, chat_type, created_at) VALUES (?, ?, ?)',
+        [user.id, 'web', new Date().toISOString()]
+      );
+      chat = { id: chatResult.lastID };
     }
 
     // Сохраняем сообщение пользователя
-    const userMessage = {
-      id: generateId(),
-      chat_id: chat.id,
-      role: 'user',
-      content: message,
-      timestamp: new Date().toISOString()
-    };
-    memoryDB.messages.push(userMessage);
+    await db.run(
+      `INSERT INTO messages (chat_id, role, content, timestamp) 
+       VALUES (?, ?, ?, ?)`,
+      [chat.id, 'user', message, new Date().toISOString()]
+    );
 
     // Получаем историю чата для контекста
-    const chatHistory = memoryDB.messages
-      .filter(m => m.chat_id === chat.id)
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const chatHistory = await db.all(
+      `SELECT role, content, timestamp 
+       FROM messages 
+       WHERE chat_id = ? 
+       ORDER BY timestamp ASC`,
+      [chat.id]
+    );
 
     console.log('Chat history length:', chatHistory.length);
 
@@ -294,14 +358,11 @@ app.post('/api/send-message', async (req, res) => {
     const aiResponse = await getAIResponse(message, user, chatHistory);
 
     // Сохраняем ответ AI
-    const aiMessage = {
-      id: generateId(),
-      chat_id: chat.id,
-      role: 'assistant',
-      content: aiResponse,
-      timestamp: new Date().toISOString()
-    };
-    memoryDB.messages.push(aiMessage);
+    await db.run(
+      `INSERT INTO messages (chat_id, role, content, timestamp) 
+       VALUES (?, ?, ?, ?)`,
+      [chat.id, 'assistant', aiResponse, new Date().toISOString()]
+    );
 
     res.json({
       success: true,
@@ -328,7 +389,11 @@ app.post('/api/chat-history', async (req, res) => {
     }
 
     // Находим пользователя
-    const user = memoryDB.users.find(u => u.id === user_data.id);
+    const user = await db.get(
+      'SELECT id FROM users WHERE id = ?',
+      [user_data.id]
+    );
+
     if (!user) {
       return res.json({
         success: false,
@@ -337,7 +402,11 @@ app.post('/api/chat-history', async (req, res) => {
     }
 
     // Находим чат пользователя
-    const chat = memoryDB.chats.find(c => c.user_id === user.id && c.chat_type === 'web');
+    const chat = await db.get(
+      'SELECT id FROM chats WHERE user_id = ? AND chat_type = ?',
+      [user.id, 'web']
+    );
+
     if (!chat) {
       return res.json({
         success: true,
@@ -346,9 +415,13 @@ app.post('/api/chat-history', async (req, res) => {
     }
 
     // Получаем историю сообщений
-    const history = memoryDB.messages
-      .filter(m => m.chat_id === chat.id)
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const history = await db.all(
+      `SELECT role, content, timestamp 
+       FROM messages 
+       WHERE chat_id = ? 
+       ORDER BY timestamp ASC`,
+      [chat.id]
+    );
 
     res.json({
       success: true,
@@ -422,13 +495,22 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Dream Interpreter server running on port ${PORT}`);
-  console.log(`📍 Health check: http://0.0.0.0:${PORT}/health`);
-  console.log(`💾 Using in-memory database`);
-  console.log(`🤖 AI API: ${OPENROUTER_API_KEY ? 'Configured' : 'Not configured'}`);
-});
+// Инициализация и запуск сервера
+async function startServer() {
+  try {
+    await initializeDatabase();
+    
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Dream Interpreter server running on port ${PORT}`);
+      console.log(`📍 Health check: http://0.0.0.0:${PORT}/health`);
+      console.log(`💾 SQLite database: Connected`);
+      console.log(`🤖 AI API: ${OPENROUTER_API_KEY ? 'Configured' : 'Not configured'}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
@@ -438,3 +520,6 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
+
+// Запуск сервера
+startServer();
