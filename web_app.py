@@ -17,51 +17,6 @@ OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 class Database:
     def __init__(self, db_path="dream_interpreter.db"):
         self.db_path = db_path
-        self.init_database()
-
-    def init_database(self):
-        """Инициализация базы данных"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Таблица пользователей
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                phone TEXT UNIQUE NOT NULL,
-                name TEXT NOT NULL,
-                birth_date TEXT NOT NULL,
-                password TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            )
-        ''')
-        
-        # Таблица чатов
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS chats (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                chat_type TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES users (id)
-            )
-        ''')
-        
-        # Таблица сообщений
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                chat_id INTEGER NOT NULL,
-                role TEXT NOT NULL,
-                content TEXT NOT NULL,
-                timestamp TEXT NOT NULL,
-                FOREIGN KEY (chat_id) REFERENCES chats (id)
-            )
-        ''')
-        
-        conn.commit()
-        conn.close()
-        logger.info("Database initialized successfully")
 
     def create_user(self, phone, name, birth_date, password):
         """Создание нового пользователя"""
@@ -412,10 +367,7 @@ def main():
                 'message': f'Error: {str(e)}'
             }, ensure_ascii=False))
     else:
-        # Инициализация базы данных
-        print("Initializing database...")
-        db = Database()
-        print("Database ready!")
+        print("Web app backend ready!")
 
 if __name__ == '__main__':
     main()
