@@ -22,7 +22,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Функция для вызова Python скриптов
+// Функция для вызова Python скриптов с правильной кодировкой
 function callPythonScript(scriptName, args = {}) {
   return new Promise((resolve, reject) => {
     console.log(`Calling Python script: ${scriptName} with args:`, JSON.stringify(args).substring(0, 200) + '...');
