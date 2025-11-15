@@ -22,7 +22,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Функция для вызова Python скриптов с правильной кодировкой
+// Функция для вызова Python скриптов
 function callPythonScript(scriptName, args = {}) {
   return new Promise((resolve, reject) => {
     console.log(`Calling Python script: ${scriptName} with args:`, JSON.stringify(args).substring(0, 200) + '...');
@@ -49,20 +49,32 @@ function callPythonScript(scriptName, args = {}) {
 
     pythonProcess.on('close', (code) => {
       console.log(`Python process exited with code ${code}`);
+      
+      // Очищаем результат от возможных лишних символов
+      const cleanResult = result.trim();
+      
       if (code === 0) {
         try {
-          if (result.trim()) {
-            const parsedResult = JSON.parse(result);
-            resolve(parsedResult);
+          if (cleanResult) {
+            // Ищем JSON в выводе (на случай если есть мусор)
+            const jsonMatch = cleanResult.match(/\{.*\}/s);
+            if (jsonMatch) {
+              const parsedResult = JSON.parse(jsonMatch[0]);
+              resolve(parsedResult);
+            } else {
+              // Если не нашли JSON, пробуем распарсить весь вывод
+              const parsedResult = JSON.parse(cleanResult);
+              resolve(parsedResult);
+            }
           } else {
             resolve({});
           }
         } catch (e) {
           console.error('Error parsing Python response:', e);
-          console.error('Raw response:', result);
+          console.error('Raw response:', cleanResult);
           resolve({ 
             success: false, 
-            message: 'Invalid JSON response from Python'
+            message: 'Invalid JSON response from Python: ' + e.message
           });
         }
       } else {
@@ -85,7 +97,7 @@ function callPythonScript(scriptName, args = {}) {
   });
 }
 
-// API Routes
+// API Routes (остаются без изменений)
 app.post('/api/register', async (req, res) => {
   try {
     const { phone, name, birth_date, password } = req.body;
