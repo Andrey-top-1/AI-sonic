@@ -6,16 +6,13 @@ import logging
 from datetime import datetime
 import os
 
-# Настройка логирования с UTF-8
+# Настройка логирования ТОЛЬКО в stderr
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stdout)]
+    handlers=[logging.StreamHandler(sys.stderr)]  # Логи ТОЛЬКО в stderr
 )
 logger = logging.getLogger(__name__)
-
-# Установка кодировки для stdout
-sys.stdout.reconfigure(encoding='utf-8') if hasattr(sys.stdout, 'reconfigure') else None
 
 # Конфигурация OpenRouter API
 OPENROUTER_API_KEY = "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"
@@ -161,7 +158,7 @@ class AIService:
                 url=self.api_url,
                 headers={
                     "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
+                    "Content-Type": "application/json; charset=utf-8",
                     "HTTP-Referer": "https://dream-interpreter.com",
                     "X-Title": "ИИ Сонник"
                 },
@@ -370,13 +367,9 @@ def main():
             else:
                 result = {'success': False, 'error': 'Unknown action'}
             
-            # Выводим результат с UTF-8 кодировкой
-            result_json = json.dumps(result, ensure_ascii=False, indent=2)
-            if hasattr(sys.stdout, 'buffer'):
-                sys.stdout.buffer.write(result_json.encode('utf-8'))
-                sys.stdout.buffer.write(b'\n')
-            else:
-                print(result_json)
+            # Выводим ТОЛЬКО JSON в stdout
+            result_json = json.dumps(result, ensure_ascii=False)
+            print(result_json)
             
         except Exception as e:
             logger.error(f"Main execution error: {str(e)}")
@@ -384,14 +377,11 @@ def main():
                 'success': False,
                 'message': f'Error: {str(e)}'
             }
-            error_json = json.dumps(error_result, ensure_ascii=False, indent=2)
-            if hasattr(sys.stdout, 'buffer'):
-                sys.stdout.buffer.write(error_json.encode('utf-8'))
-                sys.stdout.buffer.write(b'\n')
-            else:
-                print(error_json)
+            error_json = json.dumps(error_result, ensure_ascii=False)
+            print(error_json)
     else:
-        print("Web app backend ready!")
+        # Если нет аргументов, просто выводим сообщение в stderr
+        logger.info("Web app backend ready!")
 
 if __name__ == '__main__':
     main()
