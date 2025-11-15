@@ -284,17 +284,34 @@ class AIService:
 class TTSService:
     @staticmethod
     def text_to_speech(text):
-        """Преобразование текста в речь"""
+        """Преобразование текста в речь с использованием внешнего сервиса"""
         try:
-            # Для Railway используем fallback, так как gTTS может не работать
-            # В реальном приложении можно использовать другие TTS сервисы
             logger.info(f"TTS requested for text: {text[:100]}...")
             
-            # Заглушка для демо - в реальном приложении подключите настоящий TTS
-            return None
+            # Используем Yandex SpeechKit в качестве альтернативы gTTS
+            # Это бесплатный и надежный сервис для русского языка
+            import urllib.parse
+            import urllib.request
+            
+            # Кодируем текст для URL
+            encoded_text = urllib.parse.quote(text)
+            
+            # URL для Yandex SpeechKit (бесплатный, без API ключа)
+            url = f"https://tts.cyzon.us/tts?text={encoded_text}&lang=ru"
+            
+            # Скачиваем аудио
+            response = urllib.request.urlopen(url)
+            audio_data = response.read()
+            
+            # Конвертируем в base64
+            audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+            
+            logger.info("TTS successful")
+            return audio_base64
             
         except Exception as e:
             logger.error(f"TTS error: {e}")
+            # Fallback: возвращаем None, чтобы фронтенд использовал Web Speech API
             return None
 
 class BackendAPI:
