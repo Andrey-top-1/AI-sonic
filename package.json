@@ -1,17 +1,34 @@
 {
   "name": "dream-interpreter",
   "version": "1.0.0",
-  "description": "AI Dream Interpreter Web Application",
+  "description": "AI Dream Interpreter Web Application with Python backend",
   "main": "api.js",
   "scripts": {
     "start": "node api.js",
-    "dev": "node api.js"
+    "dev": "node api.js",
+    "build": "echo 'No build step required'",
+    "python": "python web_app.py",
+    "telegram": "python telegram_bot.py",
+    "start:all": "concurrently \"node api.js\" \"python telegram_bot.py\"",
+    "install:py-deps": "pip install -r requirements.txt",
+    "postinstall": "npm run install:py-deps"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "concurrently": "^7.6.0"
   },
   "engines": {
-    "node": "18.x"
-  }
+    "node": "18.x",
+    "npm": "9.x"
+  },
+  "keywords": [
+    "dream",
+    "interpreter",
+    "ai",
+    "psychology",
+    "telegram-bot"
+  ],
+  "author": "Dream Interpreter Team",
+  "license": "MIT"
 }
