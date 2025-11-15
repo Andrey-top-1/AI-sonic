@@ -4,6 +4,10 @@ builder = "nixpacks"
 [deploy]
 startCommand = "node api.js"
 
+[deploy]
+startCommand = "web_app.py"
+
+
 [env]
 PORT = "8080"
 NODE_ENV = "production"
