@@ -193,6 +193,31 @@ app.post('/api/chat-history', async (req, res) => {
   }
 });
 
+app.post('/api/text-to-speech', async (req, res) => {
+  try {
+    const { text } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        message: 'Текст обязателен'
+      });
+    }
+
+    // Используем Web Speech API на клиенте
+    res.status(500).json({
+      success: false,
+      message: 'Используйте встроенную озвучку браузера'
+    });
+  } catch (error) {
+    console.error('TTS error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Ошибка озвучки' 
+    });
+  }
+});
+
 app.post('/api/create-payment', async (req, res) => {
   try {
     const { plan } = req.body;
@@ -233,4 +258,9 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📍 Health check: http://0.0.0.0:${PORT}/health`);
   console.log(`🐍 Python integration: Active`);
   console.log(`💾 SQLite database: dream_interpreter.db`);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
 });
