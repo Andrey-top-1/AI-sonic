@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "npm run start:all"
+startCommand = "npm api.js & python3 web_app.py"
 
 [env]
 PORT = "8080"
