@@ -35,7 +35,6 @@
             overflow-x: hidden;
         }
 
-        /* Анимация звёзд */
         .stars {
             position: fixed;
             top: 0;
@@ -58,7 +57,6 @@
             }
         }
 
-        /* Шапка */
         header {
             padding: 1.5rem 2rem;
             display: flex;
@@ -152,7 +150,6 @@
             text-align: center;
         }
 
-        /* Основной чат */
         .chat-container {
             flex: 1;
             display: flex;
@@ -243,7 +240,6 @@
             text-align: left;
         }
 
-        /* Кнопка озвучивания */
         .tts-btn {
             position: absolute;
             top: 8px;
@@ -262,7 +258,6 @@
             color: var(--accent);
         }
 
-        /* Skeleton loader */
         .skeleton {
             display: flex;
             gap: 10px;
@@ -298,7 +293,6 @@
             width: 80%;
         }
 
-        /* Панель ввода */
         .input-container {
             position: fixed;
             bottom: 0;
@@ -395,7 +389,6 @@
             animation: pulse 1.5s infinite;
         }
 
-        /* Модальные окна */
         .modal {
             display: none;
             position: fixed;
@@ -506,7 +499,6 @@
             text-decoration: underline;
         }
 
-        /* Планы оплаты */
         .plans-container {
             display: grid;
             grid-template-columns: 1fr;
@@ -563,7 +555,33 @@
             color: var(--accent);
         }
 
-        /* Анимации */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: rgba(40, 40, 70, 0.95);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--accent);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left-color: #4CAF50;
+        }
+
+        .notification.error {
+            border-left-color: #f44336;
+        }
+
         @keyframes slideInFromRight {
             0% {
                 opacity: 0;
@@ -610,35 +628,6 @@
             }
         }
 
-        /* Уведомления */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            background: rgba(40, 40, 70, 0.95);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            border-left: 4px solid var(--accent);
-            transform: translateX(120%);
-            transition: transform 0.3s ease;
-            z-index: 1001;
-            max-width: 300px;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.success {
-            border-left-color: #4CAF50;
-        }
-
-        .notification.error {
-            border-left-color: #f44336;
-        }
-
-        /* Адаптивность */
         @media (max-width: 768px) {
             .chat-container {
                 width: 98%;
@@ -697,13 +686,9 @@
     </style>
 </head>
 <body>
-    <!-- Анимация звёзд -->
     <div class="stars" id="stars"></div>
-
-    <!-- Уведомления -->
     <div class="notification" id="notification"></div>
 
-    <!-- Шапка -->
     <header>
         <div class="logo">
             <i class="fas fa-moon"></i>
@@ -723,7 +708,6 @@
         </div>
     </header>
 
-    <!-- Основной чат -->
     <div class="chat-container">
         <div class="chat-header">
             <h2>ИИ Толкователь снов</h2>
@@ -731,11 +715,9 @@
         </div>
         
         <div class="chat-messages" id="chatMessages">
-            <!-- Сообщения будут добавляться здесь -->
         </div>
     </div>
     
-    <!-- Панель ввода -->
     <div class="input-container">
         <div class="input-wrapper">
             <textarea class="text-input" id="messageInput" placeholder="Опишите свой сон..." rows="1" disabled></textarea>
@@ -750,7 +732,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно регистрации -->
     <div class="modal" id="registerModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -786,7 +767,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно входа -->
     <div class="modal" id="loginModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -810,7 +790,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно оплаты -->
     <div class="modal" id="paymentModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -844,671 +823,495 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const chatMessages = document.getElementById('chatMessages');
-            const messageInput = document.getElementById('messageInput');
-            const sendBtn = document.getElementById('sendBtn');
-            const voiceBtn = document.getElementById('voiceBtn');
-            const starsContainer = document.getElementById('stars');
-            const notification = document.getElementById('notification');
-            
-            // Элементы авторизации
-            const userIcon = document.getElementById('userIcon');
-            const userIconSymbol = document.getElementById('userIconSymbol');
-            const userInitials = document.getElementById('userInitials');
-            const dropdownMenu = document.getElementById('dropdownMenu');
-            const registerBtn = document.getElementById('registerBtn');
-            const loginBtn = document.getElementById('loginBtn');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const paymentBtn = document.getElementById('paymentBtn');
-            
-            // Модальные окна
-            const registerModal = document.getElementById('registerModal');
-            const loginModal = document.getElementById('loginModal');
-            const paymentModal = document.getElementById('paymentModal');
-            const showLoginFromRegister = document.getElementById('showLoginFromRegister');
-            const showRegisterFromLogin = document.getElementById('showRegisterFromLogin');
-            const closeButtons = document.querySelectorAll('.close-modal');
-            
-            // Показать уведомление
-            function showNotification(message, type = 'success') {
-                notification.textContent = message;
-                notification.className = `notification ${type} show`;
-                
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 4000);
+        // API клиент для общения с сервером
+        class ApiClient {
+            constructor() {
+                this.baseUrl = '';
             }
-            
-            // Создание анимации звёзд
-            function createStars() {
-                const starsCount = 100;
-                
-                for (let i = 0; i < starsCount; i++) {
-                    const star = document.createElement('div');
-                    star.className = 'star';
-                    
-                    // Случайный размер от 1 до 3 пикселей
-                    const size = Math.random() * 2 + 1;
-                    star.style.width = `${size}px`;
-                    star.style.height = `${size}px`;
-                    
-                    // Случайная позиция
-                    star.style.left = `${Math.random() * 100}vw`;
-                    star.style.top = `${Math.random() * 100}vh`;
-                    
-                    // Случайная длительность анимации от 10 до 30 секунд
-                    const duration = Math.random() * 20 + 10;
-                    star.style.animationDuration = `${duration}s`;
-                    
-                    // Случайная задержка анимации
-                    star.style.animationDelay = `${Math.random() * 5}s`;
-                    
-                    starsContainer.appendChild(star);
-                }
+
+            async registerUser(phone, name, birth_date, password) {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, name, birth_date, password })
+                });
+                return await response.json();
             }
-            
-            // Проверка авторизации
-            function checkAuth() {
-                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-                if (currentUser) {
-                    // Пользователь авторизован
-                    updateUIForLoggedInUser(currentUser);
-                    return true;
+
+            async loginUser(phone, password) {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+                return await response.json();
+            }
+
+            async sendMessage(user_data, message) {
+                const response = await fetch('/api/send-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_data, message })
+                });
+                return await response.json();
+            }
+
+            async getChatHistory(user_data) {
+                const response = await fetch('/api/chat-history', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_data })
+                });
+                return await response.json();
+            }
+
+            async textToSpeech(text) {
+                const response = await fetch('/api/text-to-speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                
+                if (response.ok) {
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    return { success: true, audioUrl };
                 } else {
-                    // Пользователь не авторизован
-                    updateUIForGuest();
-                    return false;
+                    const error = await response.json();
+                    return error;
                 }
             }
+
+            async createPayment(plan) {
+                const response = await fetch('/api/create-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan })
+                });
+                return await response.json();
+            }
+        }
+
+        // Инициализация API клиента
+        const apiClient = new ApiClient();
+
+        // Остальной JavaScript код
+        let currentUser = null;
+        let recognition = null;
+        let isRecording = false;
+
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starsCount = 100;
             
-            // Обновление UI для авторизованного пользователя
-            function updateUIForLoggedInUser(userData) {
-                // Активируем поле ввода и кнопки
-                messageInput.disabled = false;
-                messageInput.placeholder = "Опишите свой сон...";
-                sendBtn.disabled = false;
-                voiceBtn.disabled = false;
+            for (let i = 0; i < starsCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
                 
-                // Обновляем иконку пользователя
-                userIconSymbol.style.display = 'none';
-                userInitials.style.display = 'block';
-                userInitials.textContent = getInitials(userData.name);
+                const size = Math.random() * 2 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
                 
-                // Обновляем выпадающее меню
-                registerBtn.style.display = 'none';
-                loginBtn.style.display = 'none';
-                logoutBtn.style.display = 'block';
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.top = `${Math.random() * 100}vh`;
                 
-                // Загружаем историю сообщений пользователя
-                loadUserChatHistory();
+                const duration = Math.random() * 20 + 10;
+                star.style.animationDuration = `${duration}s`;
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                
+                starsContainer.appendChild(star);
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        function openModal(modal) {
+            modal.classList.add('active');
+        }
+
+        function closeModal(modal) {
+            modal.classList.remove('active');
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal').forEach(modal => closeModal(modal));
+        }
+
+        function updateUIForLoggedInUser(user) {
+            currentUser = user;
+            
+            document.getElementById('messageInput').disabled = false;
+            document.getElementById('messageInput').placeholder = "Опишите свой сон...";
+            document.getElementById('sendBtn').disabled = false;
+            document.getElementById('voiceBtn').disabled = false;
+            
+            document.getElementById('userIconSymbol').style.display = 'none';
+            document.getElementById('userInitials').style.display = 'block';
+            document.getElementById('userInitials').textContent = getInitials(user.name);
+            
+            document.getElementById('registerBtn').style.display = 'none';
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'block';
+            
+            loadChatHistory();
+        }
+
+        function updateUIForGuest() {
+            currentUser = null;
+            
+            document.getElementById('messageInput').disabled = true;
+            document.getElementById('messageInput').placeholder = "Войдите, чтобы отправить сообщение";
+            document.getElementById('sendBtn').disabled = true;
+            document.getElementById('voiceBtn').disabled = true;
+            
+            document.getElementById('userIconSymbol').style.display = 'block';
+            document.getElementById('userInitials').style.display = 'none';
+            
+            document.getElementById('registerBtn').style.display = 'block';
+            document.getElementById('loginBtn').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'none';
+            
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            addMessage("Привет! Я ИИ-сонник. Опишите свой сон, и я помогу вам понять его значение. Для начала работы войдите в аккаунт.", 'bot');
+        }
+
+        function getInitials(name) {
+            return name.split(' ').map(word => word[0]).join('').toUpperCase();
+        }
+
+        async function loadChatHistory() {
+            if (!currentUser) return;
+            
+            try {
+                const result = await apiClient.getChatHistory(currentUser);
+                
+                if (result.history) {
+                    const chatMessages = document.getElementById('chatMessages');
+                    chatMessages.innerHTML = '';
+                    
+                    result.history.forEach(msg => {
+                        addMessage(msg.content, msg.role);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        function addMessage(text, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            if (sender === 'bot') {
+                const ttsBtn = document.createElement('button');
+                ttsBtn.className = 'tts-btn';
+                ttsBtn.setAttribute('aria-label', 'Озвучить сообщение');
+                ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                ttsBtn.addEventListener('click', function() {
+                    textToSpeech(text);
+                });
+                bubbleDiv.appendChild(ttsBtn);
             }
             
-            // Обновление UI для гостя
-            function updateUIForGuest() {
-                // Деактивируем поле ввода и кнопки
-                messageInput.disabled = true;
-                messageInput.placeholder = "Войдите, чтобы отправить сообщение";
-                sendBtn.disabled = true;
-                voiceBtn.disabled = true;
+            bubbleDiv.innerHTML += text;
+            bubbleDiv.appendChild(timeDiv);
+            
+            messageDiv.appendChild(bubbleDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendMessage() {
+            if (!currentUser) {
+                openModal(document.getElementById('loginModal'));
+                return;
+            }
+            
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (message === '') return;
+            
+            addMessage(message, 'user');
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            showLoadingIndicator();
+            
+            try {
+                const result = await apiClient.sendMessage(currentUser, message);
                 
-                // Обновляем иконку пользователя
-                userIconSymbol.style.display = 'block';
-                userInitials.style.display = 'none';
+                if (result.success) {
+                    removeLoadingIndicator();
+                    addMessage(result.response, 'bot');
+                } else {
+                    throw new Error(result.error || 'Ошибка отправки сообщения');
+                }
+            } catch (error) {
+                removeLoadingIndicator();
+                addMessage('Извините, произошла ошибка. Пожалуйста, попробуйте еще раз.', 'bot');
+            }
+        }
+
+        async function textToSpeech(text) {
+            try {
+                const result = await apiClient.textToSpeech(text);
                 
-                // Обновляем выпадающее меню
-                registerBtn.style.display = 'block';
-                loginBtn.style.display = 'block';
-                logoutBtn.style.display = 'none';
+                if (result.success) {
+                    const audio = new Audio(result.audioUrl);
+                    audio.play();
+                } else {
+                    showNotification(result.message, 'error');
+                }
+            } catch (error) {
+                console.error('TTS error:', error);
+                showNotification('Ошибка озвучки', 'error');
+            }
+        }
+
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'ru-RU';
+
+                recognition.onstart = function() {
+                    isRecording = true;
+                    document.getElementById('voiceBtn').classList.add('pulse');
+                    document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-stop"></i>';
+                    document.getElementById('messageInput').placeholder = "Говорите...";
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('messageInput').value = transcript;
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    showNotification('Ошибка распознавания речи', 'error');
+                };
+
+                recognition.onend = function() {
+                    isRecording = false;
+                    document.getElementById('voiceBtn').classList.remove('pulse');
+                    document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+                    document.getElementById('messageInput').placeholder = "Опишите свой сон...";
+                };
+            } else {
+                showNotification('Браузер не поддерживает распознавание речи', 'error');
+            }
+        }
+
+        function toggleSpeechRecognition() {
+            if (!currentUser) {
+                openModal(document.getElementById('loginModal'));
+                return;
+            }
+            
+            if (!isRecording) {
+                recognition.start();
+            } else {
+                recognition.stop();
+            }
+        }
+
+        function showLoadingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            const skeletonDiv = document.createElement('div');
+            skeletonDiv.className = 'message bot-message skeleton';
+            skeletonDiv.id = 'loadingIndicator';
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'skeleton-avatar';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'skeleton-content';
+            
+            const line1 = document.createElement('div');
+            line1.className = 'skeleton-line short';
+            
+            const line2 = document.createElement('div');
+            line2.className = 'skeleton-line medium';
+            
+            const line3 = document.createElement('div');
+            line3.className = 'skeleton-line';
+            
+            contentDiv.appendChild(line1);
+            contentDiv.appendChild(line2);
+            contentDiv.appendChild(line3);
+            
+            skeletonDiv.appendChild(avatarDiv);
+            skeletonDiv.appendChild(contentDiv);
+            
+            chatMessages.appendChild(skeletonDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeLoadingIndicator() {
+            const indicator = document.getElementById('loadingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        async function createPayment(plan) {
+            try {
+                const result = await apiClient.createPayment(plan);
                 
-                // Очищаем чат
-                chatMessages.innerHTML = '';
-                addMessage("Привет! Я ИИ-сонник. Опишите свой сон, и я помогу вам понять его значение. Для начала работы войдите в аккаунт.", 'bot');
+                if (result.success) {
+                    showNotification(`Платеж для тарифа "${result.payment_data.name}" создан!`, 'success');
+                    // В реальном приложении здесь будет перенаправление на страницу оплаты
+                } else {
+                    showNotification('Ошибка создания платежа', 'error');
+                }
+            } catch (error) {
+                showNotification('Ошибка создания платежа', 'error');
             }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+            initSpeechRecognition();
+            updateUIForGuest();
             
-            // Получение инициалов из имени
-            function getInitials(name) {
-                return name.split(' ').map(word => word[0]).join('').toUpperCase();
-            }
-            
-            // Управление модальными окнами
-            function openModal(modal) {
-                modal.classList.add('active');
-            }
-            
-            function closeModal(modal) {
-                modal.classList.remove('active');
-            }
-            
-            function closeAllModals() {
-                closeModal(registerModal);
-                closeModal(loginModal);
-                closeModal(paymentModal);
-            }
-            
-            // Обработчики модальных окон
-            registerBtn.addEventListener('click', () => openModal(registerModal));
-            loginBtn.addEventListener('click', () => openModal(loginModal));
-            paymentBtn.addEventListener('click', () => openModal(paymentModal));
-            showLoginFromRegister.addEventListener('click', () => {
-                closeModal(registerModal);
-                openModal(loginModal);
+            document.getElementById('registerBtn').addEventListener('click', () => openModal(document.getElementById('registerModal')));
+            document.getElementById('loginBtn').addEventListener('click', () => openModal(document.getElementById('loginModal')));
+            document.getElementById('paymentBtn').addEventListener('click', () => openModal(document.getElementById('paymentModal')));
+            document.getElementById('showLoginFromRegister').addEventListener('click', () => {
+                closeModal(document.getElementById('registerModal'));
+                openModal(document.getElementById('loginModal'));
             });
-            showRegisterFromLogin.addEventListener('click', () => {
-                closeModal(loginModal);
-                openModal(registerModal);
+            document.getElementById('showRegisterFromLogin').addEventListener('click', () => {
+                closeModal(document.getElementById('loginModal'));
+                openModal(document.getElementById('registerModal'));
             });
             
-            closeButtons.forEach(button => {
+            document.querySelectorAll('.close-modal').forEach(button => {
                 button.addEventListener('click', function() {
                     const modal = this.closest('.modal');
                     closeModal(modal);
                 });
             });
             
-            // Закрытие модальных окон при клике вне их области
             window.addEventListener('click', function(event) {
                 if (event.target.classList.contains('modal')) {
                     closeAllModals();
                 }
             });
             
-            // Обработка формы регистрации
-            document.getElementById('registerForm').addEventListener('submit', function(e) {
+            document.getElementById('registerForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const userName = document.getElementById('registerName').value.trim();
-                const userBirthDate = document.getElementById('registerBirthDate').value;
-                const userPhone = document.getElementById('registerPhone').value.trim();
-                const userPassword = document.getElementById('registerPassword').value;
-                const userConfirmPassword = document.getElementById('registerConfirmPassword').value;
+                const formData = {
+                    name: document.getElementById('registerName').value,
+                    birth_date: document.getElementById('registerBirthDate').value,
+                    phone: document.getElementById('registerPhone').value,
+                    password: document.getElementById('registerPassword').value
+                };
                 
-                // Валидация
-                if (!userName || !userBirthDate || !userPhone || !userPassword) {
-                    showNotification('Пожалуйста, заполните все поля', 'error');
-                    return;
-                }
-                
-                if (userPassword !== userConfirmPassword) {
+                if (formData.password !== document.getElementById('registerConfirmPassword').value) {
                     showNotification('Пароли не совпадают', 'error');
                     return;
                 }
                 
-                if (userPassword.length < 6) {
-                    showNotification('Пароль должен содержать не менее 6 символов', 'error');
-                    return;
+                try {
+                    const result = await apiClient.registerUser(
+                        formData.phone,
+                        formData.name,
+                        formData.birth_date,
+                        formData.password
+                    );
+                    
+                    if (result.success) {
+                        closeModal(document.getElementById('registerModal'));
+                        showNotification('Регистрация прошла успешно!');
+                        document.getElementById('registerForm').reset();
+                        
+                        // Автоматический вход после регистрации
+                        const loginResult = await apiClient.loginUser(formData.phone, formData.password);
+                        if (loginResult.success) {
+                            updateUIForLoggedInUser(loginResult.user);
+                        }
+                    } else {
+                        showNotification(result.message, 'error');
+                    }
+                } catch (error) {
+                    showNotification('Ошибка регистрации', 'error');
                 }
-                
-                // Проверяем, не зарегистрирован ли уже пользователь с таким номером
-                const users = JSON.parse(localStorage.getItem('users')) || [];
-                const existingUser = users.find(user => user.phone === userPhone);
-                
-                if (existingUser) {
-                    showNotification('Пользователь с таким номером телефона уже зарегистрирован', 'error');
-                    return;
-                }
-                
-                // Создаем нового пользователя
-                const newUser = {
-                    id: Date.now().toString(),
-                    name: userName,
-                    birthDate: userBirthDate,
-                    phone: userPhone,
-                    password: userPassword, // В реальном приложении пароль должен быть хэширован!
-                    registrationDate: new Date().toISOString(),
-                    chatHistory: []
-                };
-                
-                // Сохраняем пользователя
-                users.push(newUser);
-                localStorage.setItem('users', JSON.stringify(users));
-                
-                // Автоматически входим в аккаунт
-                localStorage.setItem('currentUser', JSON.stringify(newUser));
-                
-                // Обновляем UI
-                updateUIForLoggedInUser(newUser);
-                
-                // Закрываем модальное окно
-                closeModal(registerModal);
-                
-                // Очищаем форму
-                document.getElementById('registerForm').reset();
-                
-                // Показываем уведомление
-                showNotification(`Добро пожаловать, ${userName}! Регистрация прошла успешно.`);
-                
-                // Добавляем приветственное сообщение
-                addMessage(`Добро пожаловать, ${userName}! Теперь вы можете описывать свои сны и получать толкования.`, 'bot');
             });
             
-            // Обработка формы входа
-            document.getElementById('loginForm').addEventListener('submit', function(e) {
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const userPhone = document.getElementById('loginPhone').value.trim();
-                const userPassword = document.getElementById('loginPassword').value;
-                
-                // Валидация
-                if (!userPhone || !userPassword) {
-                    showNotification('Пожалуйста, заполните все поля', 'error');
-                    return;
-                }
-                
-                // Ищем пользователя
-                const users = JSON.parse(localStorage.getItem('users')) || [];
-                const user = users.find(u => u.phone === userPhone && u.password === userPassword);
-                
-                if (!user) {
-                    showNotification('Неверный номер телефона или пароль', 'error');
-                    return;
-                }
-                
-                // Сохраняем текущего пользователя
-                localStorage.setItem('currentUser', JSON.stringify(user));
-                
-                // Обновляем UI
-                updateUIForLoggedInUser(user);
-                
-                // Закрываем модальное окно
-                closeModal(loginModal);
-                
-                // Очищаем форму
-                document.getElementById('loginForm').reset();
-                
-                // Показываем уведомление
-                showNotification(`С возвращением, ${user.name}!`);
-                
-                // Добавляем приветственное сообщение
-                addMessage(`С возвращением, ${user.name}! Чем могу помочь?`, 'bot');
-            });
-            
-            // Обработка выхода
-            logoutBtn.addEventListener('click', function() {
-                localStorage.removeItem('currentUser');
-                checkAuth();
-                showNotification('Вы вышли из аккаунта');
-            });
-            
-            // Загрузка истории чата пользователя
-            function loadUserChatHistory() {
-                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-                if (!currentUser || !currentUser.chatHistory) return;
-                
-                // Очищаем чат
-                chatMessages.innerHTML = '';
-                
-                // Добавляем сообщения из истории
-                currentUser.chatHistory.forEach(msg => {
-                    addMessage(msg.content, msg.role, false);
-                });
-                
-                // Прокручиваем к последнему сообщению
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-            
-            // Сохранение сообщения в историю пользователя
-            function saveMessageToHistory(content, role) {
-                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-                if (!currentUser) return;
-                
-                // Обновляем историю чата
-                if (!currentUser.chatHistory) {
-                    currentUser.chatHistory = [];
-                }
-                
-                currentUser.chatHistory.push({
-                    content: content,
-                    role: role,
-                    timestamp: new Date().toISOString()
-                });
-                
-                // Сохраняем обновленного пользователя
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                
-                // Обновляем пользователя в общем списке
-                const users = JSON.parse(localStorage.getItem('users')) || [];
-                const userIndex = users.findIndex(u => u.id === currentUser.id);
-                if (userIndex !== -1) {
-                    users[userIndex] = currentUser;
-                    localStorage.setItem('users', JSON.stringify(users));
-                }
-            }
-            
-            // Обработка выбора плана оплаты
-            document.querySelectorAll('.plan-card .form-button').forEach(button => {
-                button.addEventListener('click', function() {
-                    const plan = this.getAttribute('data-plan');
-                    processPayment(plan);
-                });
-            });
-            
-            // Функция обработки оплаты
-            function processPayment(plan) {
-                // В реальном приложении здесь будет запрос к серверу для создания платежа
-                // Для демонстрации используем Robokassa
-                const merchant_login = "demo";
-                const password_1 = "password_1";
-                const invid = Math.floor(Math.random() * 1000);
-                const description = `Тариф "${plan === 'basic' ? 'Базовый' : 'Премиум'}" для ИИ Сонник`;
-                const sum = plan === 'basic' ? "299" : "799";
-                const signature_value = md5(`${merchant_login}:${sum}:${invid}:${password_1}`);
-                
-                // Создаем форму для отправки в Robokassa
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = 'https://auth.robokassa.ru/Merchant/Index.aspx';
-                
-                const fields = {
-                    'MerchantLogin': merchant_login,
-                    'OutSum': sum,
-                    'InvId': invid,
-                    'Description': description,
-                    'SignatureValue': signature_value,
-                    'IsTest': 1 // Тестовый режим
+                const formData = {
+                    phone: document.getElementById('loginPhone').value,
+                    password: document.getElementById('loginPassword').value
                 };
                 
-                for (const key in fields) {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-                    input.value = fields[key];
-                    form.appendChild(input);
-                }
-                
-                document.body.appendChild(form);
-                form.submit();
-            }
-            
-            // Простая реализация md5 для демонстрации
-            function md5(input) {
-                // В реальном приложении используйте надежную библиотеку md5
-                // Это упрощенная версия для демонстрации
-                return 'demo_signature_' + input.length;
-            }
-            
-            // Загрузка черновика из localStorage
-            const savedDraft = localStorage.getItem('dreamDraft');
-            if (savedDraft) {
-                messageInput.value = savedDraft;
-            }
-            
-            // Сохранение черновика при вводе
-            messageInput.addEventListener('input', function() {
-                localStorage.setItem('dreamDraft', messageInput.value);
-            });
-            
-            // Автоматическое увеличение высоты текстового поля
-            messageInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
-            });
-            
-            // Отправка сообщения
-            async function sendMessage() {
-                // Проверяем авторизацию
-                if (!checkAuth()) {
-                    openModal(loginModal);
-                    return;
-                }
-                
-                const message = messageInput.value.trim();
-                if (message === '') return;
-                
-                // Добавление сообщения пользователя
-                addMessage(message, 'user');
-                saveMessageToHistory(message, 'user');
-                
-                // Очистка поля ввода и localStorage
-                messageInput.value = '';
-                localStorage.removeItem('dreamDraft');
-                messageInput.style.height = 'auto';
-                
-                // Показать индикатор загрузки
-                showLoadingIndicator();
-                
                 try {
-                    // Получение ответа от AI модели
-                    const botResponse = await getAIResponse(message);
-                    removeLoadingIndicator();
-                    addMessage(botResponse, 'bot');
-                    saveMessageToHistory(botResponse, 'bot');
-                } catch (error) {
-                    removeLoadingIndicator();
-                    addMessage('Извините, произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.', 'bot');
-                    console.error('Ошибка:', error);
-                }
-            }
-            
-            // Добавление сообщения в чат
-            function addMessage(text, sender, saveToHistory = true) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${sender}-message`;
-                
-                const bubbleDiv = document.createElement('div');
-                bubbleDiv.className = 'message-bubble';
-                
-                const timeDiv = document.createElement('div');
-                timeDiv.className = 'message-time';
-                timeDiv.textContent = getCurrentTime();
-                
-                // Добавляем кнопку озвучивания для сообщений бота
-                if (sender === 'bot') {
-                    const ttsBtn = document.createElement('button');
-                    ttsBtn.className = 'tts-btn';
-                    ttsBtn.setAttribute('aria-label', 'Озвучить сообщение');
-                    ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-                    ttsBtn.addEventListener('click', function() {
-                        // В будущем здесь будет синтез речи
-                        console.log('Озвучивание сообщения:', text);
-                        // Временная заглушка - выделение кнопки
-                        ttsBtn.style.color = 'var(--accent)';
-                        setTimeout(() => {
-                            ttsBtn.style.color = '';
-                        }, 1000);
-                    });
-                    bubbleDiv.appendChild(ttsBtn);
-                }
-                
-                bubbleDiv.innerHTML += text;
-                bubbleDiv.appendChild(timeDiv);
-                
-                messageDiv.appendChild(bubbleDiv);
-                chatMessages.appendChild(messageDiv);
-                
-                // Прокрутка к последнему сообщению
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-            
-            // Получение ответа от AI модели
-            async function getAIResponse(userMessage) {
-                // В реальном приложении замените на ваш API ключ
-                const apiKey = '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';
-                
-                // Получаем данные текущего пользователя для персонализации
-                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-                let userContext = '';
-                
-                if (currentUser) {
-                    const userAge = calculateAge(currentUser.birthDate);
-                    userContext = `Пользователь: ${currentUser.name}, возраст: ${userAge} лет. `;
+                    const result = await apiClient.loginUser(formData.phone, formData.password);
                     
-                    // Добавляем историю сообщений для контекста
-                    if (currentUser.chatHistory && currentUser.chatHistory.length > 0) {
-                        // Берем последние 5 сообщений для контекста
-                        const recentMessages = currentUser.chatHistory.slice(-5);
-                        userContext += 'Предыдущие обсуждения: ';
-                        recentMessages.forEach(msg => {
-                            userContext += `${msg.role === 'user' ? 'Пользователь' : 'Ассистент'}: ${msg.content}. `;
-                        });
+                    if (result.success) {
+                        closeModal(document.getElementById('loginModal'));
+                        showNotification('Вход выполнен успешно!');
+                        updateUIForLoggedInUser(result.user);
+                        document.getElementById('loginForm').reset();
+                    } else {
+                        showNotification(result.message, 'error');
                     }
+                } catch (error) {
+                    showNotification('Ошибка входа', 'error');
                 }
-                
-                if (apiKey === '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') {
-                    // Демо-режим, если API ключ не установлен
-                    return generateDemoResponse(userMessage, userContext);
-                }
-                
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json',
-                        'HTTP-Referer': window.location.href,
-                        'X-Title': 'ИИ Сонник'
-                    },
-                    body: JSON.stringify({
-                        "model": "deepseek/deepseek-chat-v3-0324",
-                        "messages": [
-                            {
-                                "role": "system",
-                                "content": `Ты - опытный толкователь снов. Твоя задача - анализировать сны, которые описывают пользователи, и давать им психологическую интерпретацию. Будь внимательным к деталям и давай развернутые, но понятные объяснения. ${userContext}`
-                            },
-                            {
-                                "role": "user",
-                                "content": userMessage
-                            }
-                        ]
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Ошибка API: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                return data.choices[0].message.content;
-            }
+            });
             
-            // Расчет возраста по дате рождения
-            function calculateAge(birthDate) {
-                const today = new Date();
-                const birth = new Date(birthDate);
-                let age = today.getFullYear() - birth.getFullYear();
-                const monthDiff = today.getMonth() - birth.getMonth();
-                
-                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-                    age--;
-                }
-                
-                return age;
-            }
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                currentUser = null;
+                showNotification('Вы вышли из аккаунта');
+                updateUIForGuest();
+            });
             
-            // Демо-ответы, если API ключ не установлен
-            function generateDemoResponse(userMessage, userContext) {
-                const responses = [
-                    "Интересный сон! На основе анализа тысяч сновидений, могу сказать, что такой сон часто связан с эмоциональным состоянием. Возможно, вы переживаете о чем-то или испытываете внутреннее напряжение.",
-                    "Толкование вашего сна указывает на внутренние переживания или нерешенные вопросы. Это может быть отражением вашего подсознания, которое пытается обработать дневные впечатления.",
-                    "Согласно сонникам, подобные сны часто связаны с поиском себя или своего места в жизни. Возможно, вам стоит обратить внимание на текущие цели и приоритеты.",
-                    "Ваш сон может отражать скрытые желания или страхи, которые требуют внимания. Попробуйте проанализировать, какие эмоции вы испытывали во сне - это может быть ключом к пониманию.",
-                    "Интерпретация такого сна обычно связана с переменами, которые происходят или скоро произойдут в вашей жизни. Будьте открыты новым возможностям.",
-                    "Этот сон может быть отражением вашего творческого потенциала или нереализованных идей. Возможно, пришло время выразить себя в каком-то новом качестве."
-                ];
-                
-                // Добавляем персонализацию, если есть контекст пользователя
-                let response = responses[Math.floor(Math.random() * responses.length)];
-                
-                if (userContext) {
-                    response = `Учитывая ваш предыдущий опыт, ${response.toLowerCase()}`;
-                }
-                
-                return response;
-            }
+            document.getElementById('sendBtn').addEventListener('click', sendMessage);
             
-            // Показать индикатор загрузки
-            function showLoadingIndicator() {
-                const skeletonDiv = document.createElement('div');
-                skeletonDiv.className = 'message bot-message skeleton';
-                skeletonDiv.id = 'loadingIndicator';
-                
-                const avatarDiv = document.createElement('div');
-                avatarDiv.className = 'skeleton-avatar';
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'skeleton-content';
-                
-                const line1 = document.createElement('div');
-                line1.className = 'skeleton-line short';
-                
-                const line2 = document.createElement('div');
-                line2.className = 'skeleton-line medium';
-                
-                const line3 = document.createElement('div');
-                line3.className = 'skeleton-line';
-                
-                contentDiv.appendChild(line1);
-                contentDiv.appendChild(line2);
-                contentDiv.appendChild(line3);
-                
-                skeletonDiv.appendChild(avatarDiv);
-                skeletonDiv.appendChild(contentDiv);
-                
-                chatMessages.appendChild(skeletonDiv);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-            
-            // Удалить индикатор загрузки
-            function removeLoadingIndicator() {
-                const indicator = document.getElementById('loadingIndicator');
-                if (indicator) {
-                    indicator.remove();
-                }
-            }
-            
-            // Получить текущее время
-            function getCurrentTime() {
-                const now = new Date();
-                return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-            }
-            
-            // Обработчики событий
-            sendBtn.addEventListener('click', sendMessage);
-            
-            messageInput.addEventListener('keydown', function(e) {
+            document.getElementById('messageInput').addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     sendMessage();
                 }
             });
             
-            // Имитация голосового ввода
-            let isRecording = false;
-            voiceBtn.addEventListener('click', function() {
-                // Проверяем авторизацию
-                if (!checkAuth()) {
-                    openModal(loginModal);
-                    return;
-                }
-                
-                isRecording = !isRecording;
-                
-                if (isRecording) {
-                    voiceBtn.classList.add('pulse');
-                    voiceBtn.innerHTML = '<i class="fas fa-stop"></i>';
-                    messageInput.placeholder = "Говорите...";
-                    
-                    // Имитация распознавания речи через 3 секунды
-                    setTimeout(() => {
-                        if (isRecording) {
-                            messageInput.value = "Приснилось, что я нахожусь в незнакомом месте, но чувствую себя как дома.";
-                            voiceBtn.classList.remove('pulse');
-                            voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-                            messageInput.placeholder = "Опишите свой сон...";
-                            isRecording = false;
-                        }
-                    }, 3000);
-                } else {
-                    voiceBtn.classList.remove('pulse');
-                    voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-                    messageInput.placeholder = "Опишите свой сон...";
-                }
+            document.getElementById('messageInput').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
             });
             
-            // Проверяем авторизацию при загрузке
-            checkAuth();
+            document.getElementById('voiceBtn').addEventListener('click', toggleSpeechRecognition);
             
-            // Создание звёзд
-            createStars();
+            document.querySelectorAll('.plan-card .form-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const plan = this.getAttribute('data-plan');
+                    createPayment(plan);
+                });
+            });
         });
     </script>
 </body>
