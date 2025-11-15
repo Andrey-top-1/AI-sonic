@@ -72,12 +72,12 @@
 
         .star, .cloud {
             position: absolute;
-            animation: fall linear infinite;
         }
 
         .star {
             background-color: white;
             border-radius: 50%;
+            animation: fall linear infinite;
         }
 
         .cloud {
@@ -85,6 +85,8 @@
             border-radius: 50px;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
             opacity: 0.9;
+            left: -100px;
+            animation: cloudFall linear infinite;
         }
 
         .floating-message {
@@ -96,6 +98,7 @@
             pointer-events: none;
             z-index: 100;
             opacity: 0;
+            left: -200px;
             animation: floatMessage 15s linear forwards;
         }
 
@@ -110,43 +113,50 @@
             }
         }
 
+        @keyframes cloudFall {
+            to {
+                transform: translateX(100vw);
+            }
+        }
+
         @keyframes floatMessage {
             0% {
                 opacity: 0;
-                transform: translateY(100vh) scale(0.5);
+                transform: translateX(0) scale(0.5);
             }
             10% {
                 opacity: 1;
-                transform: translateY(80vh) scale(1);
+                transform: translateX(100px) scale(1);
             }
             90% {
                 opacity: 1;
-                transform: translateY(20vh) scale(1);
+                transform: translateX(calc(100vw - 200px)) scale(1);
             }
             100% {
                 opacity: 0;
-                transform: translateY(0) scale(0.5);
+                transform: translateX(100vw) scale(0.5);
             }
         }
 
         .theme-toggle {
             position: fixed;
-            top: 20px;
-            right: 80px;
+            bottom: 20px;
+            left: 20px;
             z-index: 1000;
             background: rgba(255, 255, 255, 0.2);
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             backdrop-filter: blur(10px);
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         body.light-theme .theme-toggle {
@@ -412,6 +422,7 @@
             font-size: 0.8rem;
             opacity: 0.7;
             transition: all 0.2s;
+            z-index: 10;
         }
 
         .tts-btn:hover {
@@ -420,6 +431,15 @@
         }
 
         body.light-theme .tts-btn:hover {
+            color: var(--accent-light);
+        }
+
+        .tts-btn.playing {
+            color: var(--accent);
+            opacity: 1;
+        }
+
+        body.light-theme .tts-btn.playing {
             color: var(--accent-light);
         }
 
@@ -938,8 +958,10 @@
             }
             
             .theme-toggle {
-                top: 15px;
-                right: 70px;
+                bottom: 15px;
+                left: 15px;
+                width: 45px;
+                height: 45px;
             }
         }
 
@@ -1115,321 +1137,178 @@
     </div>
 
     <script>
-        // API клиент для общения с OpenRouter API
+        // API клиент для общения с сервером
         class ApiClient {
             constructor() {
-                this.openRouterApiKey = "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";
-                this.openRouterApiUrl = "https://openrouter.ai/api/v1/chat/completions";
+                this.baseUrl = '';
             }
 
-            async getAIResponse(userMessage, userData, chatHistory) {
-                try {
-                    // Создаем системный промпт с данными пользователя
-                    const systemPrompt = this.createSystemPrompt(userData);
-                    
-                    // Формируем сообщения для AI
-                    const messages = [{ role: "system", content: systemPrompt }];
-                    
-                    // Добавляем историю сообщений
-                    for (const msg of chatHistory) {
-                        messages.push({
-                            role: msg.role === 'user' ? 'user' : 'assistant',
-                            content: msg.content
-                        });
-                    }
-                    
-                    // Добавляем текущее сообщение пользователя
-                    messages.push({ role: "user", content: userMessage });
-                    
-                    console.log(`Sending request to AI with ${messages.length} messages`);
-                    
-                    // Отправляем запрос к OpenRouter API
-                    const response = await fetch(this.openRouterApiUrl, {
-                        method: "POST",
-                        headers: {
-                            "Authorization": `Bearer ${this.openRouterApiKey}`,
-                            "Content-Type": "application/json",
-                            "HTTP-Referer": "https://dream-interpreter.com",
-                            "X-Title": "ИИ Сонник"
-                        },
-                        body: JSON.stringify({
-                            model: "deepseek/deepseek-chat-v3-0324",
-                            messages: messages,
-                            max_tokens: 1000,
-                            temperature: 0.7
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        const aiResponse = data.choices[0].message.content;
-                        console.log("AI response received successfully");
-                        return aiResponse;
-                    } else {
-                        console.error(`OpenRouter API error: ${response.status} - ${await response.text()}`);
-                        return "Извините, произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.";
-                    }
-                } catch (error) {
-                    console.error('AI API error:', error);
-                    return "Извините, сервис временно недоступен. Пожалуйста, попробуйте позже.";
-                }
+            async registerUser(phone, name, birth_date, password) {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, name, birth_date, password })
+                });
+                return await response.json();
             }
 
-            createSystemPrompt(userData) {
-                const age = this.calculateAge(userData.birth_date);
-                const name = userData.name;
-                
-                return `Ты - опытный психолог-толкователь снов с 20-летним стажем. Твоя задача - анализировать сны и давать глубокую психологическую интерпретацию.
-
-ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ:
-- Имя: ${name}
-- Возраст: ${age} лет
-
-ТВОИ ОСОБЕННОСТИ:
-1. Анализируй сны с точки зрения психологии (Фрейд, Юнг, современные подходы)
-2. Учитывай контекст предыдущих бесед и снов пользователя
-3. Давай развернутые, но понятные объяснения
-4. Будь эмпатичным и поддерживающим
-5. Предлагай практические рекомендации
-6. Связывай символы сна с реальной жизнью пользователя
-7. Учитывай возрастные особенности
-
-ВАЖНЫЕ ПРИНЦИПЫ:
-- Сны - это способ подсознания общаться с сознанием
-- Каждый символ имеет значение
-- Контекст предыдущих снов важен для точной интерпретации
-- Давай не только анализ, но и рекомендации
-
-ФОРМАТ ОТВЕТА:
-1. Анализ основных символов
-2. Психологическая интерпретация
-3. Связь с реальной жизнью
-4. Практические рекомендации
-
-Помни: ты помогаешь ${name} лучше понять себя через анализ снов.`;
-            }
-
-            calculateAge(birthDateStr) {
-                try {
-                    const birthDate = new Date(birthDateStr);
-                    const today = new Date();
-                    let age = today.getFullYear() - birthDate.getFullYear();
-                    
-                    const monthDiff = today.getMonth() - birthDate.getMonth();
-                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                        age--;
-                    }
-                    
-                    return age;
-                } catch {
-                    return "неизвестно";
-                }
-            }
-        }
-
-        // Менеджер базы данных на localStorage
-        class Database {
-            constructor() {
-                this.initDatabase();
-            }
-
-            initDatabase() {
-                if (!localStorage.getItem('users')) {
-                    localStorage.setItem('users', JSON.stringify([]));
-                }
-                if (!localStorage.getItem('chats')) {
-                    localStorage.setItem('chats', JSON.stringify([]));
-                }
-                if (!localStorage.getItem('messages')) {
-                    localStorage.setItem('messages', JSON.stringify([]));
-                }
-            }
-
-            createUser(phone, name, birth_date, password) {
-                const users = JSON.parse(localStorage.getItem('users'));
-                
-                if (users.find(u => u.phone === phone)) {
-                    throw new Error("Пользователь с таким номером телефона уже существует");
-                }
-                
-                const user = {
-                    id: Date.now(),
-                    phone,
-                    name,
-                    birth_date,
-                    password,
-                    created_at: new Date().toISOString()
-                };
-                
-                users.push(user);
-                localStorage.setItem('users', JSON.stringify(users));
-                return user.id;
-            }
-
-            getUserByPhone(phone) {
-                const users = JSON.parse(localStorage.getItem('users'));
-                return users.find(u => u.phone === phone) || null;
-            }
-
-            getOrCreateChat(user_id, chat_type = 'web') {
-                const chats = JSON.parse(localStorage.getItem('chats'));
-                
-                let chat = chats.find(c => c.user_id === user_id && c.chat_type === chat_type);
-                
-                if (!chat) {
-                    chat = {
-                        id: Date.now(),
-                        user_id,
-                        chat_type,
-                        created_at: new Date().toISOString()
-                    };
-                    
-                    chats.push(chat);
-                    localStorage.setItem('chats', JSON.stringify(chats));
-                }
-                
-                return chat.id;
-            }
-
-            saveMessage(chat_id, role, content) {
-                const messages = JSON.parse(localStorage.getItem('messages'));
-                
-                const message = {
-                    id: Date.now(),
-                    chat_id,
-                    role,
-                    content,
-                    timestamp: new Date().toISOString()
-                };
-                
-                messages.push(message);
-                localStorage.setItem('messages', JSON.stringify(messages));
-            }
-
-            getChatHistory(chat_id, limit = 10) {
-                const messages = JSON.parse(localStorage.getItem('messages'));
-                
-                return messages
-                    .filter(m => m.chat_id === chat_id)
-                    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-                    .slice(-limit)
-                    .map(m => ({
-                        role: m.role,
-                        content: m.content,
-                        timestamp: m.timestamp
-                    }));
-            }
-        }
-
-        // Бэкенд API
-        class BackendAPI {
-            constructor() {
-                this.db = new Database();
-                this.aiService = new ApiClient();
-            }
-
-            registerUser(phone, name, birth_date, password) {
-                try {
-                    const user_id = this.db.createUser(phone, name, birth_date, password);
-                    return {
-                        success: true,
-                        message: 'Регистрация прошла успешно!',
-                        user_id: user_id
-                    };
-                } catch (error) {
-                    return {
-                        success: false,
-                        message: error.message
-                    };
-                }
-            }
-
-            loginUser(phone, password) {
-                try {
-                    const user = this.db.getUserByPhone(phone);
-                    
-                    if (user && user.password === password) {
-                        return {
-                            success: true,
-                            message: 'Вход выполнен успешно!',
-                            user: {
-                                id: user.id,
-                                name: user.name,
-                                phone: user.phone,
-                                birth_date: user.birth_date
-                            }
-                        };
-                    } else {
-                        return {
-                            success: false,
-                            message: 'Неверный номер телефона или пароль'
-                        };
-                    }
-                } catch (error) {
-                    return {
-                        success: false,
-                        message: 'Внутренняя ошибка сервера'
-                    };
-                }
+            async loginUser(phone, password) {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+                return await response.json();
             }
 
             async sendMessage(user_data, message) {
-                try {
-                    const user = this.db.getUserByPhone(user_data.phone);
-                    if (!user) {
-                        return { success: false, error: 'Пользователь не найден' };
-                    }
-                    
-                    // Получаем или создаем чат
-                    const chat_id = this.db.getOrCreateChat(user.id, 'web');
-                    
-                    // Сохраняем сообщение пользователя
-                    this.db.saveMessage(chat_id, 'user', message);
-                    
-                    // Получаем историю чата (последние 6 сообщений для контекста)
-                    const chat_history = this.db.getChatHistory(chat_id, limit = 6);
-                    
-                    console.log(`Chat history for user ${user.name}: ${chat_history.length} messages`);
-                    
-                    // Получаем ответ от AI
-                    const ai_response = await this.aiService.getAIResponse(message, user, chat_history);
-                    
-                    // Сохраняем ответ AI
-                    this.db.saveMessage(chat_id, 'assistant', ai_response);
-                    
-                    return {
-                        success: true,
-                        response: ai_response
-                    };
-                } catch (error) {
-                    console.error('Send message error:', error);
-                    return {
-                        success: false,
-                        message: 'Извините, произошла ошибка. Пожалуйста, попробуйте еще раз.'
-                    };
-                }
+                const response = await fetch('/api/send-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_data, message })
+                });
+                return await response.json();
             }
 
-            getChatHistory(user_data) {
-                try {
-                    const user = this.db.getUserByPhone(user_data.phone);
-                    if (!user) {
-                        return { success: false, error: 'Пользователь не найден' };
-                    }
-                    
-                    const chat_id = this.db.getOrCreateChat(user.id, 'web');
-                    const history = this.db.getChatHistory(chat_id, limit = 20);
-                    
-                    return { success: true, history: history };
-                } catch (error) {
-                    console.error('Get chat history error:', error);
-                    return { success: false, history: [] };
-                }
+            async getChatHistory(user_data) {
+                const response = await fetch('/api/chat-history', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_data })
+                });
+                return await response.json();
+            }
+
+            async createPayment(plan) {
+                const response = await fetch('/api/create-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan })
+                });
+                return await response.json();
             }
         }
 
-        // Инициализация API клиента
-        const backendAPI = new BackendAPI();
+        // TTS сервис с использованием Web Speech API и резервного варианта через Google TTS
+        class TTSService {
+            constructor() {
+                this.speechSynthesis = window.speechSynthesis;
+                this.isPlaying = false;
+                this.currentUtterance = null;
+            }
+
+            // Основной метод озвучки через Web Speech API
+            async speak(text) {
+                // Останавливаем текущее воспроизведение
+                this.stop();
+                
+                return new Promise((resolve) => {
+                    if (!this.speechSynthesis) {
+                        console.error('Speech Synthesis not supported');
+                        this.useFallbackTTS(text);
+                        resolve();
+                        return;
+                    }
+
+                    // Создаем utterance
+                    this.currentUtterance = new SpeechSynthesisUtterance(text);
+                    this.currentUtterance.lang = 'ru-RU';
+                    this.currentUtterance.rate = 0.9;
+                    this.currentUtterance.pitch = 1.0;
+                    this.currentUtterance.volume = 1.0;
+
+                    // Пытаемся найти русский голос
+                    const voices = this.speechSynthesis.getVoices();
+                    const russianVoice = voices.find(voice => 
+                        voice.lang.includes('ru') || voice.lang.includes('RU')
+                    );
+                    
+                    if (russianVoice) {
+                        this.currentUtterance.voice = russianVoice;
+                    }
+
+                    // События
+                    this.currentUtterance.onstart = () => {
+                        this.isPlaying = true;
+                    };
+
+                    this.currentUtterance.onend = () => {
+                        this.isPlaying = false;
+                        this.currentUtterance = null;
+                        resolve();
+                    };
+
+                    this.currentUtterance.onerror = (event) => {
+                        console.error('Speech synthesis error:', event);
+                        this.isPlaying = false;
+                        this.currentUtterance = null;
+                        // Пробуем резервный метод
+                        this.useFallbackTTS(text);
+                        resolve();
+                    };
+
+                    // Запускаем озвучку
+                    this.speechSynthesis.speak(this.currentUtterance);
+                });
+            }
+
+            // Резервный метод через Google TTS API
+            useFallbackTTS(text) {
+                try {
+                    // Создаем аудио элемент
+                    const audio = new Audio();
+                    
+                    // Кодируем текст для URL
+                    const encodedText = encodeURIComponent(text);
+                    
+                    // Используем Google Translate TTS API (ограничение: ~200 символов)
+                    if (text.length <= 200) {
+                        audio.src = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ru&q=${encodedText}`;
+                        audio.play().catch(e => {
+                            console.error('Fallback TTS failed:', e);
+                            this.showTTSError();
+                        });
+                    } else {
+                        // Для длинных текстов разбиваем на части
+                        this.speakLongText(text);
+                    }
+                } catch (error) {
+                    console.error('Fallback TTS error:', error);
+                    this.showTTSError();
+                }
+            }
+
+            // Озвучка длинных текстов по частям
+            async speakLongText(text) {
+                const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+                
+                for (let i = 0; i < sentences.length; i++) {
+                    const sentence = sentences[i].trim();
+                    if (sentence.length > 0) {
+                        await this.speak(sentence);
+                        // Пауза между предложениями
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+            }
+
+            stop() {
+                if (this.speechSynthesis) {
+                    this.speechSynthesis.cancel();
+                }
+                this.isPlaying = false;
+                this.currentUtterance = null;
+            }
+
+            showTTSError() {
+                // Можно показать уведомление, что озвучка недоступна
+                console.warn('TTS is not available');
+            }
+        }
+
+        // Инициализация API клиента и TTS сервиса
+        const apiClient = new ApiClient();
+        const ttsService = new TTSService();
 
         // Остальной JavaScript код
         let currentUser = null;
@@ -1472,7 +1351,8 @@
                 cloud.style.width = `${width}px`;
                 cloud.style.height = `${height}px`;
                 
-                cloud.style.left = `${Math.random() * 100}vw`;
+                // Облака появляются слева на разной высоте
+                cloud.style.left = `-${width}px`;
                 cloud.style.top = `${Math.random() * 100}vh`;
                 
                 const duration = Math.random() * 40 + 20;
@@ -1495,7 +1375,8 @@
             floatingMessage.className = 'floating-message';
             floatingMessage.textContent = message;
             
-            floatingMessage.style.left = `${Math.random() * 80 + 10}vw`;
+            floatingMessage.style.left = `-${Math.random() * 100 + 50}px`;
+            floatingMessage.style.top = `${Math.random() * 80 + 10}vh`;
             floatingMessage.style.fontSize = `${Math.random() * 10 + 14}px`;
             
             document.body.appendChild(floatingMessage);
@@ -1604,7 +1485,7 @@
             if (!currentUser) return;
             
             try {
-                const result = await backendAPI.getChatHistory(currentUser);
+                const result = await apiClient.getChatHistory(currentUser);
                 
                 if (result.success && result.history) {
                     const chatMessages = document.getElementById('chatMessages');
@@ -1637,7 +1518,23 @@
                 ttsBtn.setAttribute('aria-label', 'Озвучить сообщение');
                 ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
                 ttsBtn.addEventListener('click', function() {
-                    textToSpeech(text);
+                    const isPlaying = ttsBtn.classList.contains('playing');
+                    
+                    if (isPlaying) {
+                        // Если уже играет, останавливаем
+                        ttsService.stop();
+                        ttsBtn.classList.remove('playing');
+                        ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                    } else {
+                        // Если не играет, запускаем озвучку
+                        ttsBtn.classList.add('playing');
+                        ttsBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                        
+                        ttsService.speak(text).then(() => {
+                            ttsBtn.classList.remove('playing');
+                            ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                        });
+                    }
                 });
                 bubbleDiv.appendChild(ttsBtn);
             }
@@ -1669,7 +1566,7 @@
             showLoadingIndicator();
             
             try {
-                const result = await backendAPI.sendMessage(currentUser, message);
+                const result = await apiClient.sendMessage(currentUser, message);
                 
                 if (result.success) {
                     removeLoadingIndicator();
@@ -1680,44 +1577,6 @@
             } catch (error) {
                 removeLoadingIndicator();
                 addMessage('Извините, произошла ошибка. Пожалуйста, попробуйте еще раз.', 'bot');
-            }
-        }
-
-        async function textToSpeech(text) {
-            try {
-                // Используем браузерный Web Speech API
-                if ('speechSynthesis' in window) {
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.lang = 'ru-RU';
-                    utterance.rate = 0.8;
-                    utterance.pitch = 1.0;
-                    utterance.volume = 1.0;
-
-                    // Пробуем найти русский голос
-                    const voices = speechSynthesis.getVoices();
-                    const russianVoice = voices.find(voice => 
-                        voice.lang.includes('ru') || voice.lang.includes('RU')
-                    );
-                    
-                    if (russianVoice) {
-                        utterance.voice = russianVoice;
-                    }
-
-                    utterance.onend = function() {
-                        console.log('Speech synthesis finished');
-                    };
-
-                    utterance.onerror = function(event) {
-                        console.error('Speech synthesis error:', event);
-                    };
-
-                    speechSynthesis.speak(utterance);
-                } else {
-                    showNotification('Браузер не поддерживает озвучку', 'error');
-                }
-            } catch (error) {
-                console.error('TTS error:', error);
-                showNotification('Ошибка озвучки', 'error');
             }
         }
 
@@ -1810,18 +1669,14 @@
 
         async function createPayment(plan) {
             try {
-                // В реальном приложении здесь будет интеграция с платежной системой
-                const plans = {
-                    'basic': { price: '299', name: 'Базовый' },
-                    'premium': { price: '799', name: 'Премиум' }
-                };
+                const result = await apiClient.createPayment(plan);
                 
-                const planData = plans[plan] || plans['basic'];
-                
-                showNotification(`Платеж для тарифа "${planData.name}" создан! Сумма: ${planData.price} ₽`, 'success');
-                
-                // Закрываем модальное окно
-                closeModal(document.getElementById('paymentModal'));
+                if (result.success) {
+                    showNotification(`Платеж для тарифа "${result.payment_data.name}" создан!`, 'success');
+                    // В реальном приложении здесь будет перенаправление на страницу оплаты
+                } else {
+                    showNotification('Ошибка создания платежа', 'error');
+                }
             } catch (error) {
                 showNotification('Ошибка создания платежа', 'error');
             }
@@ -1883,7 +1738,7 @@
                 }
                 
                 try {
-                    const result = backendAPI.registerUser(
+                    const result = await apiClient.registerUser(
                         formData.phone,
                         formData.name,
                         formData.birth_date,
@@ -1896,7 +1751,7 @@
                         document.getElementById('registerForm').reset();
                         
                         // Автоматический вход после регистрации
-                        const loginResult = backendAPI.loginUser(formData.phone, formData.password);
+                        const loginResult = await apiClient.loginUser(formData.phone, formData.password);
                         if (loginResult.success) {
                             updateUIForLoggedInUser(loginResult.user);
                         }
@@ -1917,7 +1772,7 @@
                 };
                 
                 try {
-                    const result = backendAPI.loginUser(formData.phone, formData.password);
+                    const result = await apiClient.loginUser(formData.phone, formData.password);
                     
                     if (result.success) {
                         closeModal(document.getElementById('loginModal'));
