@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Конфигурация Telegram бота
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', 'YOUR_TELEGRAM_BOT_TOKEN')
+TELEGRAM_BOT_TOKEN = os.getenv('8328551756:AAEWPTFIWrREap94-pL86p6-nWM_3UJcB2g', '8328551756:AAEWPTFIWrREap94-pL86p6-nWM_3UJcB2g')
 OPENROUTER_API_KEY = "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"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
