@@ -2,8 +2,11 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "node api.js & python web_app.py"
+startCommand = "node api.js & python telegram_bot.py && fg"
 
 [env]
 PORT = "8080"
 NODE_ENV = "production"
+PYTHONIOENCODING = "utf-8"
+LANG = "C.UTF-8"
+LC_ALL = "C.UTF-8"
