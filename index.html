@@ -6,7 +6,137 @@
     <title>ИИ Сонник - Толкователь снов</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Все стили из предыдущего ответа остаются, но добавляем/изменяем: */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #0c0c2b 0%, #1a1a3e 100%);
+            --primary-gradient-light: linear-gradient(135deg, #87CEEB 0%, #E0F7FA 100%);
+            --chat-bg: rgba(25, 25, 50, 0.9);
+            --chat-bg-light: rgba(255, 255, 255, 0.95);
+            --user-msg: #4a4a8a;
+            --user-msg-light: #4a76a8;
+            --bot-msg: #2d2d5a;
+            --bot-msg-light: #e6f2ff;
+            --accent: #ff6b6b;
+            --accent-light: #ff5252;
+            --text-primary: #f1f1f1;
+            --text-primary-light: #333333;
+            --text-secondary: #b8b8d6;
+            --text-secondary-light: #666666;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --radius: 18px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: all 0.5s ease;
+        }
+
+        body.light-theme {
+            background: var(--primary-gradient-light);
+            color: var(--text-primary-light);
+        }
+
+        .stars, .clouds {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .clouds {
+            display: none;
+        }
+
+        body.light-theme .stars {
+            display: none;
+        }
+
+        body.light-theme .clouds {
+            display: block;
+        }
+
+        .star, .cloud {
+            position: absolute;
+        }
+
+        .star {
+            background-color: white;
+            border-radius: 50%;
+            animation: fall linear infinite;
+        }
+
+        .cloud {
+            background: white;
+            border-radius: 50px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            opacity: 0.9;
+            left: -100px;
+            animation: cloudFall linear infinite;
+        }
+
+        .floating-message {
+            position: absolute;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+            left: -200px;
+            animation: floatMessage 15s linear forwards;
+        }
+
+        body.light-theme .floating-message {
+            color: #333;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+
+        @keyframes cloudFall {
+            to {
+                transform: translateX(100vw);
+            }
+        }
+
+        @keyframes floatMessage {
+            0% {
+                opacity: 0;
+                transform: translateX(0) scale(0.5);
+            }
+            10% {
+                opacity: 1;
+                transform: translateX(100px) scale(1);
+            }
+            90% {
+                opacity: 1;
+                transform: translateX(calc(100vw - 200px)) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(100vw) scale(0.5);
+            }
+        }
 
         .theme-toggle {
             position: fixed;
@@ -38,48 +168,833 @@
             transform: scale(1.1);
         }
 
-        .cloud {
-            /* Облака теперь появляются слева */
-            left: -100px;
-            animation: cloudFall linear infinite;
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        @keyframes cloudFall {
-            to {
-                transform: translateX(100vw);
-            }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
         }
 
-        .floating-message {
-            /* Сообщения тоже появляются слева */
-            left: -200px;
-            animation: floatMessage 15s linear forwards;
+        body.light-theme .logo {
+            color: #333;
         }
 
-        @keyframes floatMessage {
+        .logo i {
+            font-size: 1.8rem;
+            color: #a78bfa;
+        }
+
+        body.light-theme .logo i {
+            color: #4a76a8;
+        }
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        body.light-theme .user-icon {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+
+        .user-icon:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        body.light-theme .user-icon:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: rgba(40, 40, 70, 0.95);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 15px 0;
+            width: 220px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        body.light-theme .dropdown-menu {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: var(--shadow-light);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .user-menu:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-menu button {
+            width: 100%;
+            padding: 15px 25px;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: var(--text-primary);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        body.light-theme .dropdown-menu button {
+            color: var(--text-primary-light);
+        }
+
+        .dropdown-menu button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        body.light-theme .dropdown-menu button:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .dropdown-menu i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            width: 95%;
+            margin: 0 auto 100px;
+            background: var(--chat-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 70vh;
+        }
+
+        body.light-theme .chat-container {
+            background: var(--chat-bg-light);
+            box-shadow: var(--shadow-light);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-header {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(40, 40, 70, 0.8);
+        }
+
+        body.light-theme .chat-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .chat-header h2 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        body.light-theme .chat-header h2 {
+            color: var(--text-primary-light);
+        }
+
+        .chat-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        body.light-theme .chat-header p {
+            color: var(--text-secondary-light);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: 65vh;
+            min-height: 400px;
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            display: flex;
+            animation-duration: 0.5s;
+            animation-fill-mode: both;
+        }
+
+        .user-message {
+            justify-content: flex-end;
+        }
+
+        .bot-message {
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 12px 18px;
+            border-radius: var(--radius);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .user-message .message-bubble {
+            background: var(--user-msg);
+            color: white;
+            border-bottom-right-radius: 5px;
+            animation-name: slideInFromRight;
+        }
+
+        body.light-theme .user-message .message-bubble {
+            background: var(--user-msg-light);
+            color: white;
+        }
+
+        .bot-message .message-bubble {
+            background: var(--bot-msg);
+            color: var(--text-primary);
+            border-bottom-left-radius: 5px;
+            animation-name: slideInFromLeft;
+        }
+
+        body.light-theme .bot-message .message-bubble {
+            background: var(--bot-msg-light);
+            color: var(--text-primary-light);
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .bot-message .message-time {
+            text-align: left;
+        }
+
+        .tts-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .tts-btn:hover {
+            opacity: 1;
+            color: var(--accent);
+        }
+
+        body.light-theme .tts-btn:hover {
+            color: var(--accent-light);
+        }
+
+        .tts-btn.playing {
+            color: var(--accent);
+            opacity: 1;
+        }
+
+        body.light-theme .tts-btn.playing {
+            color: var(--accent-light);
+        }
+
+        .skeleton {
+            display: flex;
+            gap: 10px;
+        }
+
+        .skeleton-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #2d2d5a 25%, #3a3a6a 50%, #2d2d5a 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        body.light-theme .skeleton-avatar {
+            background: linear-gradient(90deg, #e6f2ff 25%, #d9e9ff 50%, #e6f2ff 75%);
+        }
+
+        .skeleton-content {
+            flex: 1;
+        }
+
+        .skeleton-line {
+            height: 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #2d2d5a 25%, #3a3a6a 50%, #2d2d5a 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        body.light-theme .skeleton-line {
+            background: linear-gradient(90deg, #e6f2ff 25%, #d9e9ff 50%, #e6f2ff 75%);
+        }
+
+        .skeleton-line.short {
+            width: 60%;
+        }
+
+        .skeleton-line.medium {
+            width: 80%;
+        }
+
+        .input-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem;
+            background: rgba(25, 25, 50, 0.9);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        body.light-theme .input-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .text-input {
+            flex: 1;
+            padding: 14px 18px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(40, 40, 70, 0.9);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            resize: none;
+            max-height: 120px;
+            min-height: 50px;
+            color: var(--text-primary);
+        }
+
+        body.light-theme .text-input {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            color: var(--text-primary-light);
+        }
+
+        .text-input:focus {
+            outline: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transform: scale(1.02);
+            background: rgba(50, 50, 90, 0.9);
+        }
+
+        body.light-theme .text-input:focus {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .text-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        body.light-theme .text-input::placeholder {
+            color: var(--text-secondary-light);
+        }
+
+        .text-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .btn-send {
+            background: var(--accent);
+        }
+
+        body.light-theme .btn-send {
+            background: var(--accent-light);
+        }
+
+        .btn-voice {
+            background: var(--user-msg);
+        }
+
+        body.light-theme .btn-voice {
+            background: var(--user-msg-light);
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        body.light-theme .modal {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--chat-bg);
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 450px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.light-theme .modal-content {
+            background: var(--chat-bg-light);
+            box-shadow: var(--shadow-light);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        body.light-theme .modal-title {
+            color: var(--text-primary-light);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: var(--accent);
+        }
+
+        body.light-theme .close-modal:hover {
+            color: var(--accent-light);
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        body.light-theme .form-label {
+            color: var(--text-secondary-light);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(40, 40, 70, 0.9);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        body.light-theme .form-input {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text-primary-light);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
+        }
+
+        body.light-theme .form-input:focus {
+            border-color: var(--accent-light);
+            box-shadow: 0 0 0 2px rgba(255, 82, 82, 0.2);
+        }
+
+        .form-button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 0.5rem;
+        }
+
+        body.light-theme .form-button {
+            background: var(--accent-light);
+        }
+
+        .form-button:hover {
+            background: var(--accent-hover);
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        body.light-theme .form-footer {
+            color: var(--text-secondary-light);
+        }
+
+        .form-link {
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        body.light-theme .form-link {
+            color: var(--accent-light);
+        }
+
+        .plans-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .plan-card {
+            background: rgba(40, 40, 70, 0.7);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        body.light-theme .plan-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .plan-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        body.light-theme .plan-card:hover {
+            border-color: var(--accent-light);
+        }
+
+        .plan-card.selected {
+            border-color: var(--accent);
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        body.light-theme .plan-card.selected {
+            border-color: var(--accent-light);
+            background: rgba(255, 82, 82, 0.1);
+        }
+
+        .plan-name {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        body.light-theme .plan-name {
+            color: var(--text-primary-light);
+        }
+
+        .plan-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        body.light-theme .plan-price {
+            color: var(--accent-light);
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-features li {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+
+        body.light-theme .plan-features li {
+            color: var(--text-secondary-light);
+        }
+
+        .plan-features i {
+            color: var(--accent);
+        }
+
+        body.light-theme .plan-features i {
+            color: var(--accent-light);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: rgba(40, 40, 70, 0.95);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--accent);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            max-width: 300px;
+        }
+
+        body.light-theme .notification {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: var(--shadow-light);
+            border-left: 4px solid var(--accent-light);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left-color: #4CAF50;
+        }
+
+        .notification.error {
+            border-left-color: #f44336;
+        }
+
+        @keyframes slideInFromRight {
             0% {
                 opacity: 0;
-                transform: translateX(0) scale(0.5);
+                transform: translateX(30px);
             }
-            10% {
-                opacity: 1;
-                transform: translateX(100px) scale(1);
-            }
-            90% {
-                opacity: 1;
-                transform: translateX(calc(100vw - 200px)) scale(1);
+            70% {
+                transform: translateX(-5px);
             }
             100% {
-                opacity: 0;
-                transform: translateX(100vw) scale(0.5);
+                opacity: 1;
+                transform: translateX(0);
             }
         }
 
-        /* Остальные стили остаются как в предыдущем ответе */
+        @keyframes slideInFromLeft {
+            0% {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+            }
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                width: 98%;
+                margin-bottom: 120px;
+            }
+
+            .message-bubble {
+                max-width: 85%;
+            }
+
+            header {
+                padding: 1rem;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+            
+            .dropdown-menu {
+                width: 200px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+            
+            .theme-toggle {
+                bottom: 15px;
+                left: 15px;
+                width: 45px;
+                height: 45px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chat-messages {
+                padding: 1rem;
+            }
+
+            .input-container {
+                padding: 1rem;
+            }
+
+            .text-input {
+                padding: 12px 16px;
+            }
+
+            .btn {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .dropdown-menu {
+                width: 180px;
+                padding: 10px 0;
+            }
+            
+            .dropdown-menu button {
+                padding: 12px 20px;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Кнопка переключения темы в левом нижнем углу -->
     <button class="theme-toggle" id="themeToggle">
         <i class="fas fa-moon"></i>
     </button>
@@ -88,7 +1003,6 @@
     <div class="clouds" id="clouds"></div>
     <div class="notification" id="notification"></div>
 
-    <!-- Остальная HTML структура остается без изменений -->
     <header>
         <div class="logo">
             <i class="fas fa-moon"></i>
@@ -132,14 +1046,297 @@
         </div>
     </div>
 
-    <!-- Модальные окна остаются без изменений -->
-    <div class="modal" id="registerModal">...</div>
-    <div class="modal" id="loginModal">...</div>
-    <div class="modal" id="paymentModal">...</div>
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Регистрация</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label" for="registerName">Имя</label>
+                    <input type="text" class="form-input" id="registerName" placeholder="Введите ваше имя" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="registerBirthDate">Дата рождения</label>
+                    <input type="date" class="form-input" id="registerBirthDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="registerPhone">Номер телефона</label>
+                    <input type="tel" class="form-input" id="registerPhone" placeholder="+7 (XXX) XXX-XX-XX" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="registerPassword">Пароль</label>
+                    <input type="password" class="form-input" id="registerPassword" placeholder="Придумайте пароль" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="registerConfirmPassword">Подтвердите пароль</label>
+                    <input type="password" class="form-input" id="registerConfirmPassword" placeholder="Повторите пароль" required>
+                </div>
+                <button type="submit" class="form-button">Зарегистрироваться</button>
+                <div class="form-footer">
+                    Уже есть аккаунт? <span class="form-link" id="showLoginFromRegister">Войти</span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Вход в аккаунт</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="loginPhone">Номер телефона</label>
+                    <input type="tel" class="form-input" id="loginPhone" placeholder="+7 (XXX) XXX-XX-XX" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword">Пароль</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="Ваш пароль" required>
+                </div>
+                <button type="submit" class="form-button">Войти</button>
+                <div class="form-footer">
+                    Нет аккаунта? <span class="form-link" id="showRegisterFromLogin">Зарегистрироваться</span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Выберите тариф</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="plans-container">
+                <div class="plan-card" data-plan="basic">
+                    <div class="plan-name">Базовый</div>
+                    <div class="plan-price">299 ₽/мес</div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> 50 толкований в месяц</li>
+                        <li><i class="fas fa-check"></i> Базовая интерпретация снов</li>
+                        <li><i class="fas fa-check"></i> Сохранение истории</li>
+                    </ul>
+                    <button class="form-button" data-plan="basic">Выбрать</button>
+                </div>
+                <div class="plan-card" data-plan="premium">
+                    <div class="plan-name">Премиум</div>
+                    <div class="plan-price">799 ₽/мес</div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> Неограниченные толкования</li>
+                        <li><i class="fas fa-check"></i> Расширенный анализ снов</li>
+                        <li><i class="fas fa-check"></i> Персональные рекомендации</li>
+                        <li><i class="fas fa-check"></i> Приоритетная поддержка</li>
+                    </ul>
+                    <button class="form-button" data-plan="premium">Выбрать</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // JavaScript код остается таким же как в предыдущем ответе,
-        // но добавляем функцию createClouds() для облаков слева:
+        // API клиент для общения с сервером
+        class ApiClient {
+            constructor() {
+                this.baseUrl = '';
+            }
+
+            async registerUser(phone, name, birth_date, password) {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, name, birth_date, password })
+                });
+                return await response.json();
+            }
+
+            async loginUser(phone, password) {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+                return await response.json();
+            }
+
+            async sendMessage(user_data, message) {
+                const response = await fetch('/api/send-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_data, message })
+                });
+                return await response.json();
+            }
+
+            async getChatHistory(user_data) {
+                const response = await fetch('/api/chat-history', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_data })
+                });
+                return await response.json();
+            }
+
+            async createPayment(plan) {
+                const response = await fetch('/api/create-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan })
+                });
+                return await response.json();
+            }
+        }
+
+        // TTS сервис с использованием Web Speech API и резервного варианта через Google TTS
+        class TTSService {
+            constructor() {
+                this.speechSynthesis = window.speechSynthesis;
+                this.isPlaying = false;
+                this.currentUtterance = null;
+            }
+
+            // Основной метод озвучки через Web Speech API
+            async speak(text) {
+                // Останавливаем текущее воспроизведение
+                this.stop();
+                
+                return new Promise((resolve) => {
+                    if (!this.speechSynthesis) {
+                        console.error('Speech Synthesis not supported');
+                        this.useFallbackTTS(text);
+                        resolve();
+                        return;
+                    }
+
+                    // Создаем utterance
+                    this.currentUtterance = new SpeechSynthesisUtterance(text);
+                    this.currentUtterance.lang = 'ru-RU';
+                    this.currentUtterance.rate = 0.9;
+                    this.currentUtterance.pitch = 1.0;
+                    this.currentUtterance.volume = 1.0;
+
+                    // Пытаемся найти русский голос
+                    const voices = this.speechSynthesis.getVoices();
+                    const russianVoice = voices.find(voice => 
+                        voice.lang.includes('ru') || voice.lang.includes('RU')
+                    );
+                    
+                    if (russianVoice) {
+                        this.currentUtterance.voice = russianVoice;
+                    }
+
+                    // События
+                    this.currentUtterance.onstart = () => {
+                        this.isPlaying = true;
+                    };
+
+                    this.currentUtterance.onend = () => {
+                        this.isPlaying = false;
+                        this.currentUtterance = null;
+                        resolve();
+                    };
+
+                    this.currentUtterance.onerror = (event) => {
+                        console.error('Speech synthesis error:', event);
+                        this.isPlaying = false;
+                        this.currentUtterance = null;
+                        // Пробуем резервный метод
+                        this.useFallbackTTS(text);
+                        resolve();
+                    };
+
+                    // Запускаем озвучку
+                    this.speechSynthesis.speak(this.currentUtterance);
+                });
+            }
+
+            // Резервный метод через Google TTS API
+            useFallbackTTS(text) {
+                try {
+                    // Создаем аудио элемент
+                    const audio = new Audio();
+                    
+                    // Кодируем текст для URL
+                    const encodedText = encodeURIComponent(text);
+                    
+                    // Используем Google Translate TTS API (ограничение: ~200 символов)
+                    if (text.length <= 200) {
+                        audio.src = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ru&q=${encodedText}`;
+                        audio.play().catch(e => {
+                            console.error('Fallback TTS failed:', e);
+                            this.showTTSError();
+                        });
+                    } else {
+                        // Для длинных текстов разбиваем на части
+                        this.speakLongText(text);
+                    }
+                } catch (error) {
+                    console.error('Fallback TTS error:', error);
+                    this.showTTSError();
+                }
+            }
+
+            // Озвучка длинных текстов по частям
+            async speakLongText(text) {
+                const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+                
+                for (let i = 0; i < sentences.length; i++) {
+                    const sentence = sentences[i].trim();
+                    if (sentence.length > 0) {
+                        await this.speak(sentence);
+                        // Пауза между предложениями
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+            }
+
+            stop() {
+                if (this.speechSynthesis) {
+                    this.speechSynthesis.cancel();
+                }
+                this.isPlaying = false;
+                this.currentUtterance = null;
+            }
+
+            showTTSError() {
+                // Можно показать уведомление, что озвучка недоступна
+                console.warn('TTS is not available');
+            }
+        }
+
+        // Инициализация API клиента и TTS сервиса
+        const apiClient = new ApiClient();
+        const ttsService = new TTSService();
+
+        // Остальной JavaScript код
+        let currentUser = null;
+        let recognition = null;
+        let isRecording = false;
+
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starsCount = 100;
+            
+            for (let i = 0; i < starsCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const size = Math.random() * 2 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.top = `${Math.random() * 100}vh`;
+                
+                const duration = Math.random() * 20 + 10;
+                star.style.animationDuration = `${duration}s`;
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                
+                starsContainer.appendChild(star);
+            }
+        }
 
         function createClouds() {
             const cloudsContainer = document.getElementById('clouds');
@@ -166,7 +1363,459 @@
             }
         }
 
-        // Остальной JavaScript код остается без изменений
+        function createFloatingMessage() {
+            const messages = [
+                "Лучший проект",
+                "Покупай подписку",
+                "Проект заслуживающий первое место"
+            ];
+            
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            const floatingMessage = document.createElement('div');
+            floatingMessage.className = 'floating-message';
+            floatingMessage.textContent = message;
+            
+            floatingMessage.style.left = `-${Math.random() * 100 + 50}px`;
+            floatingMessage.style.top = `${Math.random() * 80 + 10}vh`;
+            floatingMessage.style.fontSize = `${Math.random() * 10 + 14}px`;
+            
+            document.body.appendChild(floatingMessage);
+            
+            setTimeout(() => {
+                floatingMessage.remove();
+            }, 15000);
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.getElementById('themeToggle');
+            const icon = themeToggle.querySelector('i');
+            
+            if (body.classList.contains('light-theme')) {
+                body.classList.remove('light-theme');
+                icon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.add('light-theme');
+                icon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const themeToggle = document.getElementById('themeToggle');
+            const icon = themeToggle.querySelector('i');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                icon.className = 'fas fa-sun';
+            } else {
+                document.body.classList.remove('light-theme');
+                icon.className = 'fas fa-moon';
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        function openModal(modal) {
+            modal.classList.add('active');
+        }
+
+        function closeModal(modal) {
+            modal.classList.remove('active');
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal').forEach(modal => closeModal(modal));
+        }
+
+        function updateUIForLoggedInUser(user) {
+            currentUser = user;
+            
+            document.getElementById('messageInput').disabled = false;
+            document.getElementById('messageInput').placeholder = "Опишите свой сон...";
+            document.getElementById('sendBtn').disabled = false;
+            document.getElementById('voiceBtn').disabled = false;
+            
+            document.getElementById('userIconSymbol').style.display = 'none';
+            document.getElementById('userInitials').style.display = 'block';
+            document.getElementById('userInitials').textContent = getInitials(user.name);
+            
+            document.getElementById('registerBtn').style.display = 'none';
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'block';
+            
+            loadChatHistory();
+        }
+
+        function updateUIForGuest() {
+            currentUser = null;
+            
+            document.getElementById('messageInput').disabled = true;
+            document.getElementById('messageInput').placeholder = "Войдите, чтобы отправить сообщение";
+            document.getElementById('sendBtn').disabled = true;
+            document.getElementById('voiceBtn').disabled = true;
+            
+            document.getElementById('userIconSymbol').style.display = 'block';
+            document.getElementById('userInitials').style.display = 'none';
+            
+            document.getElementById('registerBtn').style.display = 'block';
+            document.getElementById('loginBtn').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'none';
+            
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            addMessage("Привет! Я ИИ-сонник. Опишите свой сон, и я помогу вам понять его значение. Для начала работы войдите в аккаунт.", 'bot');
+        }
+
+        function getInitials(name) {
+            return name.split(' ').map(word => word[0]).join('').toUpperCase();
+        }
+
+        async function loadChatHistory() {
+            if (!currentUser) return;
+            
+            try {
+                const result = await apiClient.getChatHistory(currentUser);
+                
+                if (result.success && result.history) {
+                    const chatMessages = document.getElementById('chatMessages');
+                    chatMessages.innerHTML = '';
+                    
+                    result.history.forEach(msg => {
+                        addMessage(msg.content, msg.role);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        function addMessage(text, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            if (sender === 'bot') {
+                const ttsBtn = document.createElement('button');
+                ttsBtn.className = 'tts-btn';
+                ttsBtn.setAttribute('aria-label', 'Озвучить сообщение');
+                ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                ttsBtn.addEventListener('click', function() {
+                    const isPlaying = ttsBtn.classList.contains('playing');
+                    
+                    if (isPlaying) {
+                        // Если уже играет, останавливаем
+                        ttsService.stop();
+                        ttsBtn.classList.remove('playing');
+                        ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                    } else {
+                        // Если не играет, запускаем озвучку
+                        ttsBtn.classList.add('playing');
+                        ttsBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                        
+                        ttsService.speak(text).then(() => {
+                            ttsBtn.classList.remove('playing');
+                            ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                        });
+                    }
+                });
+                bubbleDiv.appendChild(ttsBtn);
+            }
+            
+            bubbleDiv.innerHTML += text;
+            bubbleDiv.appendChild(timeDiv);
+            
+            messageDiv.appendChild(bubbleDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendMessage() {
+            if (!currentUser) {
+                openModal(document.getElementById('loginModal'));
+                return;
+            }
+            
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (message === '') return;
+            
+            addMessage(message, 'user');
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            showLoadingIndicator();
+            
+            try {
+                const result = await apiClient.sendMessage(currentUser, message);
+                
+                if (result.success) {
+                    removeLoadingIndicator();
+                    addMessage(result.response, 'bot');
+                } else {
+                    throw new Error(result.error || 'Ошибка отправки сообщения');
+                }
+            } catch (error) {
+                removeLoadingIndicator();
+                addMessage('Извините, произошла ошибка. Пожалуйста, попробуйте еще раз.', 'bot');
+            }
+        }
+
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'ru-RU';
+
+                recognition.onstart = function() {
+                    isRecording = true;
+                    document.getElementById('voiceBtn').classList.add('pulse');
+                    document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-stop"></i>';
+                    document.getElementById('messageInput').placeholder = "Говорите...";
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('messageInput').value = transcript;
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    showNotification('Ошибка распознавания речи', 'error');
+                };
+
+                recognition.onend = function() {
+                    isRecording = false;
+                    document.getElementById('voiceBtn').classList.remove('pulse');
+                    document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+                    document.getElementById('messageInput').placeholder = "Опишите свой сон...";
+                };
+            } else {
+                document.getElementById('voiceBtn').style.display = 'none';
+            }
+        }
+
+        function toggleSpeechRecognition() {
+            if (!currentUser) {
+                openModal(document.getElementById('loginModal'));
+                return;
+            }
+            
+            if (!isRecording) {
+                recognition.start();
+            } else {
+                recognition.stop();
+            }
+        }
+
+        function showLoadingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            const skeletonDiv = document.createElement('div');
+            skeletonDiv.className = 'message bot-message skeleton';
+            skeletonDiv.id = 'loadingIndicator';
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'skeleton-avatar';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'skeleton-content';
+            
+            const line1 = document.createElement('div');
+            line1.className = 'skeleton-line short';
+            
+            const line2 = document.createElement('div');
+            line2.className = 'skeleton-line medium';
+            
+            const line3 = document.createElement('div');
+            line3.className = 'skeleton-line';
+            
+            contentDiv.appendChild(line1);
+            contentDiv.appendChild(line2);
+            contentDiv.appendChild(line3);
+            
+            skeletonDiv.appendChild(avatarDiv);
+            skeletonDiv.appendChild(contentDiv);
+            
+            chatMessages.appendChild(skeletonDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeLoadingIndicator() {
+            const indicator = document.getElementById('loadingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        async function createPayment(plan) {
+            try {
+                const result = await apiClient.createPayment(plan);
+                
+                if (result.success) {
+                    showNotification(`Платеж для тарифа "${result.payment_data.name}" создан!`, 'success');
+                    // В реальном приложении здесь будет перенаправление на страницу оплаты
+                } else {
+                    showNotification('Ошибка создания платежа', 'error');
+                }
+            } catch (error) {
+                showNotification('Ошибка создания платежа', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+            createClouds();
+            initTheme();
+            initSpeechRecognition();
+            updateUIForGuest();
+            
+            // Случайные сообщения каждые 30 секунд с 10% шансом
+            setInterval(() => {
+                if (Math.random() < 0.1) {
+                    createFloatingMessage();
+                }
+            }, 30000);
+            
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            document.getElementById('registerBtn').addEventListener('click', () => openModal(document.getElementById('registerModal')));
+            document.getElementById('loginBtn').addEventListener('click', () => openModal(document.getElementById('loginModal')));
+            document.getElementById('paymentBtn').addEventListener('click', () => openModal(document.getElementById('paymentModal')));
+            document.getElementById('showLoginFromRegister').addEventListener('click', () => {
+                closeModal(document.getElementById('registerModal'));
+                openModal(document.getElementById('loginModal'));
+            });
+            document.getElementById('showRegisterFromLogin').addEventListener('click', () => {
+                closeModal(document.getElementById('loginModal'));
+                openModal(document.getElementById('registerModal'));
+            });
+            
+            document.querySelectorAll('.close-modal').forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    closeModal(modal);
+                });
+            });
+            
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    closeAllModals();
+                }
+            });
+            
+            document.getElementById('registerForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    name: document.getElementById('registerName').value,
+                    birth_date: document.getElementById('registerBirthDate').value,
+                    phone: document.getElementById('registerPhone').value,
+                    password: document.getElementById('registerPassword').value
+                };
+                
+                if (formData.password !== document.getElementById('registerConfirmPassword').value) {
+                    showNotification('Пароли не совпадают', 'error');
+                    return;
+                }
+                
+                try {
+                    const result = await apiClient.registerUser(
+                        formData.phone,
+                        formData.name,
+                        formData.birth_date,
+                        formData.password
+                    );
+                    
+                    if (result.success) {
+                        closeModal(document.getElementById('registerModal'));
+                        showNotification('Регистрация прошла успешно!');
+                        document.getElementById('registerForm').reset();
+                        
+                        // Автоматический вход после регистрации
+                        const loginResult = await apiClient.loginUser(formData.phone, formData.password);
+                        if (loginResult.success) {
+                            updateUIForLoggedInUser(loginResult.user);
+                        }
+                    } else {
+                        showNotification(result.message, 'error');
+                    }
+                } catch (error) {
+                    showNotification('Ошибка регистрации', 'error');
+                }
+            });
+            
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    phone: document.getElementById('loginPhone').value,
+                    password: document.getElementById('loginPassword').value
+                };
+                
+                try {
+                    const result = await apiClient.loginUser(formData.phone, formData.password);
+                    
+                    if (result.success) {
+                        closeModal(document.getElementById('loginModal'));
+                        showNotification('Вход выполнен успешно!');
+                        updateUIForLoggedInUser(result.user);
+                        document.getElementById('loginForm').reset();
+                    } else {
+                        showNotification(result.message, 'error');
+                    }
+                } catch (error) {
+                    showNotification('Ошибка входа', 'error');
+                }
+            });
+            
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                currentUser = null;
+                showNotification('Вы вышли из аккаунта');
+                updateUIForGuest();
+            });
+            
+            document.getElementById('sendBtn').addEventListener('click', sendMessage);
+            
+            document.getElementById('messageInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            document.getElementById('messageInput').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+            
+            document.getElementById('voiceBtn').addEventListener('click', toggleSpeechRecognition);
+            
+            document.querySelectorAll('.plan-card .form-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const plan = this.getAttribute('data-plan');
+                    createPayment(plan);
+                });
+            });
+        });
     </script>
 </body>
 </html>
