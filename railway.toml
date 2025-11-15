@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "npm run install:py-deps && npm run start:all"
+startCommand = "npm run start:all"
 
 [env]
 PORT = "8080"
