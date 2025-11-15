@@ -3,7 +3,19 @@ import requests
 import json
 import logging
 import os
+import sys
 from datetime import datetime
+
+# Проверяем наличие telebot
+try:
+    import telebot
+    from telebot import types
+    TELEBOT_AVAILABLE = True
+except ImportError as e:
+    print(f"Telegram bot dependencies not available: {e}")
+    print("Telegram bot will not start")
+    TELEBOT_AVAILABLE = False
+    sys.exit(0)  # Выходим без ошибки
 
 # Настройка логирования
 logging.basicConfig(
@@ -12,16 +24,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Попробуем импортировать telebot, но если его нет - просто выйдем
-try:
-    import telebot
-    from telebot import types
-    TELEBOT_AVAILABLE = True
-except ImportError:
-    logger.error("pyTelegramBotAPI not installed. Telegram bot will not work.")
-    TELEBOT_AVAILABLE = False
-    exit(1)
-
 # Конфигурация
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8328551756:AAEWPTFIWrREap94-pL86p6-nWM_3UJcB2g')
 OPENROUTER_API_KEY = "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"
@@ -29,12 +31,9 @@ OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == 'YOUR_TELEGRAM_BOT_TOKEN':
     logger.error("TELEGRAM_BOT_TOKEN not set!")
-    exit(1)
+    sys.exit(0)
 
-if TELEBOT_AVAILABLE:
-    bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
-else:
-    bot = None
+bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 
 # Хранилище состояний пользователей
 user_states = {}
@@ -251,173 +250,172 @@ class AIService:
 db = Database()
 ai_service = AIService()
 
-if TELEBOT_AVAILABLE and bot:
-    @bot.message_handler(commands=['start'])
-    def start_handler(message):
-        """Обработчик команды /start"""
-        user_id = message.from_user.id
-        
-        # Сбрасываем состояние пользователя
+@bot.message_handler(commands=['start'])
+def start_handler(message):
+    """Обработчик команды /start"""
+    user_id = message.from_user.id
+    
+    # Сбрасываем состояние пользователя
+    user_states[user_id] = 'waiting_phone'
+    user_data[user_id] = {}
+    
+    bot.send_message(
+        message.chat.id,
+        "👋 Добро пожаловать в ИИ-сонник!\n\n"
+        "Для начала работы необходимо авторизоваться.\n"
+        "📱 *Введите ваш номер телефона:*\n"
+        "(в формате +7XXXXXXXXXX или 8XXXXXXXXXX)",
+        parse_mode='Markdown'
+    )
+
+@bot.message_handler(func=lambda message: user_states.get(message.from_user.id) == 'waiting_phone')
+def phone_handler(message):
+    """Обработчик ввода номера телефона"""
+    user_id = message.from_user.id
+    phone = message.text.strip()
+    
+    # Простая валидация номера телефона
+    if not (phone.startswith('+7') or phone.startswith('8') or phone.startswith('7')):
+        bot.send_message(
+            message.chat.id,
+            "❌ Неверный формат номера. Пожалуйста, введите номер в формате:\n"
+            "+7XXXXXXXXXX или 8XXXXXXXXXX"
+        )
+        return
+    
+    # Нормализуем номер телефона
+    if phone.startswith('8'):
+        phone = '+7' + phone[1:]
+    elif phone.startswith('7') and not phone.startswith('+7'):
+        phone = '+' + phone
+    
+    # Проверяем существование пользователя
+    user = db.get_user_by_phone(phone)
+    if not user:
+        bot.send_message(
+            message.chat.id,
+            "❌ Пользователь с таким номером телефона не найден.\n"
+            "Пожалуйста, зарегистрируйтесь через веб-версию или проверьте номер."
+        )
         user_states[user_id] = 'waiting_phone'
-        user_data[user_id] = {}
-        
+        return
+    
+    # Сохраняем данные пользователя
+    user_data[user_id]['phone'] = phone
+    user_data[user_id]['user_info'] = user
+    
+    # Переходим к запросу пароля
+    user_states[user_id] = 'waiting_password'
+    
+    bot.send_message(
+        message.chat.id,
+        "🔐 *Введите ваш пароль:*",
+        parse_mode='Markdown'
+    )
+
+@bot.message_handler(func=lambda message: user_states.get(message.from_user.id) == 'waiting_password')
+def password_handler(message):
+    """Обработчик ввода пароля"""
+    user_id = message.from_user.id
+    password = message.text.strip()
+    
+    user_info = user_data[user_id]['user_info']
+    
+    # Проверяем пароль
+    if user_info['password'] != password:
         bot.send_message(
             message.chat.id,
-            "👋 Добро пожаловать в ИИ-сонник!\n\n"
-            "Для начала работы необходимо авторизоваться.\n"
-            "📱 *Введите ваш номер телефона:*\n"
-            "(в формате +7XXXXXXXXXX или 8XXXXXXXXXX)",
-            parse_mode='Markdown'
+            "❌ Неверный пароль. Пожалуйста, попробуйте еще раз:"
         )
+        return
+    
+    # Привязываем Telegram аккаунт
+    telegram_username = message.from_user.username
+    db.link_telegram_user(user_info['id'], str(user_id), telegram_username)
+    
+    # Авторизация успешна
+    user_states[user_id] = 'authorized'
+    
+    # Загружаем историю чатов
+    chat_id = db.get_or_create_chat(user_info['id'], 'telegram', message.chat.id)
+    history = db.get_chat_history(chat_id, limit=10)
+    
+    # Отправляем приветственное сообщение
+    welcome_text = (
+        f"✅ *Авторизация успешна!*\n\n"
+        f"Привет, {user_info['name']}! 👋\n"
+        f"Теперь вы можете описывать свои сны, и я помогу их растолковать.\n\n"
+        f"*Пример:* \"Мне приснилось, что я летаю над городом...\"\n\n"
+    )
+    
+    if history:
+        welcome_text += f"📚 Загружено {len(history)} предыдущих сообщений из истории."
+    
+    bot.send_message(message.chat.id, welcome_text, parse_mode='Markdown')
 
-    @bot.message_handler(func=lambda message: user_states.get(message.from_user.id) == 'waiting_phone')
-    def phone_handler(message):
-        """Обработчик ввода номера телефона"""
-        user_id = message.from_user.id
-        phone = message.text.strip()
-        
-        # Простая валидация номера телефона
-        if not (phone.startswith('+7') or phone.startswith('8') or phone.startswith('7')):
-            bot.send_message(
-                message.chat.id,
-                "❌ Неверный формат номера. Пожалуйста, введите номер в формате:\n"
-                "+7XXXXXXXXXX или 8XXXXXXXXXX"
-            )
-            return
-        
-        # Нормализуем номер телефона
-        if phone.startswith('8'):
-            phone = '+7' + phone[1:]
-        elif phone.startswith('7') and not phone.startswith('+7'):
-            phone = '+' + phone
-        
-        # Проверяем существование пользователя
-        user = db.get_user_by_phone(phone)
-        if not user:
-            bot.send_message(
-                message.chat.id,
-                "❌ Пользователь с таким номером телефона не найден.\n"
-                "Пожалуйста, зарегистрируйтесь через веб-версию или проверьте номер."
-            )
-            user_states[user_id] = 'waiting_phone'
-            return
-        
-        # Сохраняем данные пользователя
-        user_data[user_id]['phone'] = phone
-        user_data[user_id]['user_info'] = user
-        
-        # Переходим к запросу пароля
-        user_states[user_id] = 'waiting_password'
-        
-        bot.send_message(
-            message.chat.id,
-            "🔐 *Введите ваш пароль:*",
-            parse_mode='Markdown'
-        )
-
-    @bot.message_handler(func=lambda message: user_states.get(message.from_user.id) == 'waiting_password')
-    def password_handler(message):
-        """Обработчик ввода пароля"""
-        user_id = message.from_user.id
-        password = message.text.strip()
-        
-        user_info = user_data[user_id]['user_info']
-        
-        # Проверяем пароль
-        if user_info['password'] != password:
-            bot.send_message(
-                message.chat.id,
-                "❌ Неверный пароль. Пожалуйста, попробуйте еще раз:"
-            )
-            return
-        
-        # Привязываем Telegram аккаунт
-        telegram_username = message.from_user.username
-        db.link_telegram_user(user_info['id'], str(user_id), telegram_username)
-        
-        # Авторизация успешна
-        user_states[user_id] = 'authorized'
-        
-        # Загружаем историю чатов
+@bot.message_handler(func=lambda message: user_states.get(message.from_user.id) == 'authorized')
+def message_handler(message):
+    """Обработчик сообщений после авторизации"""
+    user_id = message.from_user.id
+    
+    if not message.text or message.text.strip() == '':
+        bot.send_message(message.chat.id, "Пожалуйста, опишите ваш сон.")
+        return
+    
+    user_info = user_data[user_id]['user_info']
+    user_message = message.text.strip()
+    
+    # Показываем индикатор набора
+    bot.send_chat_action(message.chat.id, 'typing')
+    
+    try:
+        # Получаем или создаем чат
         chat_id = db.get_or_create_chat(user_info['id'], 'telegram', message.chat.id)
-        history = db.get_chat_history(chat_id, limit=10)
         
-        # Отправляем приветственное сообщение
-        welcome_text = (
-            f"✅ *Авторизация успешна!*\n\n"
-            f"Привет, {user_info['name']}! 👋\n"
-            f"Теперь вы можете описывать свои сны, и я помогу их растолковать.\n\n"
-            f"*Пример:* \"Мне приснилось, что я летаю над городом...\"\n\n"
+        # Сохраняем сообщение пользователя
+        db.save_message(chat_id, 'user', user_message)
+        
+        # Получаем историю чата
+        chat_history = db.get_chat_history(chat_id, limit=6)
+        
+        # Получаем ответ от AI
+        ai_response = ai_service.get_ai_response(user_message, user_info, chat_history)
+        
+        # Сохраняем ответ AI
+        db.save_message(chat_id, 'assistant', ai_response)
+        
+        # Отправляем ответ пользователю
+        bot.send_message(message.chat.id, ai_response)
+        
+    except Exception as e:
+        logger.error(f"Error processing message: {e}")
+        bot.send_message(
+            message.chat.id,
+            "❌ Произошла ошибка при обработке вашего сообщения. Пожалуйста, попробуйте еще раз."
         )
-        
-        if history:
-            welcome_text += f"📚 Загружено {len(history)} предыдущих сообщений из истории."
-        
-        bot.send_message(message.chat.id, welcome_text, parse_mode='Markdown')
 
-    @bot.message_handler(func=lambda message: user_states.get(message.from_user.id) == 'authorized')
-    def message_handler(message):
-        """Обработчик сообщений после авторизации"""
-        user_id = message.from_user.id
-        
-        if not message.text or message.text.strip() == '':
-            bot.send_message(message.chat.id, "Пожалуйста, опишите ваш сон.")
-            return
-        
-        user_info = user_data[user_id]['user_info']
-        user_message = message.text.strip()
-        
-        # Показываем индикатор набора
-        bot.send_chat_action(message.chat.id, 'typing')
-        
-        try:
-            # Получаем или создаем чат
-            chat_id = db.get_or_create_chat(user_info['id'], 'telegram', message.chat.id)
-            
-            # Сохраняем сообщение пользователя
-            db.save_message(chat_id, 'user', user_message)
-            
-            # Получаем историю чата
-            chat_history = db.get_chat_history(chat_id, limit=6)
-            
-            # Получаем ответ от AI
-            ai_response = ai_service.get_ai_response(user_message, user_info, chat_history)
-            
-            # Сохраняем ответ AI
-            db.save_message(chat_id, 'assistant', ai_response)
-            
-            # Отправляем ответ пользователю
-            bot.send_message(message.chat.id, ai_response)
-            
-        except Exception as e:
-            logger.error(f"Error processing message: {e}")
-            bot.send_message(
-                message.chat.id,
-                "❌ Произошла ошибка при обработке вашего сообщения. Пожалуйста, попробуйте еще раз."
-            )
-
-    @bot.message_handler(func=lambda message: True)
-    def default_handler(message):
-        """Обработчик сообщений по умолчанию"""
-        user_id = message.from_user.id
-        
-        if user_id not in user_states:
-            bot.send_message(
-                message.chat.id,
-                "Для начала работы отправьте команду /start"
-            )
-        else:
-            bot.send_message(
-                message.chat.id,
-                "Пожалуйста, завершите процесс авторизации или отправьте команду /start для начала."
-            )
+@bot.message_handler(func=lambda message: True)
+def default_handler(message):
+    """Обработчик сообщений по умолчанию"""
+    user_id = message.from_user.id
+    
+    if user_id not in user_states:
+        bot.send_message(
+            message.chat.id,
+            "Для начала работы отправьте команду /start"
+        )
+    else:
+        bot.send_message(
+            message.chat.id,
+            "Пожалуйста, завершите процесс авторизации или отправьте команду /start для начала."
+        )
 
 if __name__ == '__main__':
-    if TELEBOT_AVAILABLE and bot:
+    if TELEBOT_AVAILABLE:
         logger.info("Telegram bot started with phone authorization...")
         try:
             bot.polling(none_stop=True, interval=0)
         except Exception as e:
             logger.error(f"Bot polling error: {e}")
     else:
-        logger.error("Telegram bot cannot start - dependencies not available")
+        logger.info("Telegram bot dependencies not available - skipping")
