@@ -1,75 +1,172 @@
-// API клиент для общения с сервером
-class ApiClient {
-    constructor() {
-        this.baseUrl = '';
-    }
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ИИ Сонник - Толкователь снов</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Все стили из предыдущего ответа остаются, но добавляем/изменяем: */
 
-    async registerUser(phone, name, birth_date, password) {
-        const response = await fetch('/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone, name, birth_date, password })
-        });
-        return await response.json();
-    }
-
-    async loginUser(phone, password) {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone, password })
-        });
-        return await response.json();
-    }
-
-    async sendMessage(user_data, message) {
-        const response = await fetch('/api/send-message', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_data, message })
-        });
-        return await response.json();
-    }
-
-    async getChatHistory(user_data) {
-        const response = await fetch('/api/chat-history', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_data })
-        });
-        return await response.json();
-    }
-
-    async textToSpeech(text) {
-        try {
-            const response = await fetch('/api/text-to-speech', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text })
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                return result;
-            } else {
-                const error = await response.json();
-                return error;
-            }
-        } catch (error) {
-            console.error('TTS request error:', error);
-            return { 
-                success: false, 
-                message: 'Ошибка соединения с сервером озвучки' 
-            };
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 1.3rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
-    }
 
-    async createPayment(plan) {
-        const response = await fetch('/api/create-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ plan })
-        });
-        return await response.json();
-    }
-}
+        body.light-theme .theme-toggle {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .cloud {
+            /* Облака теперь появляются слева */
+            left: -100px;
+            animation: cloudFall linear infinite;
+        }
+
+        @keyframes cloudFall {
+            to {
+                transform: translateX(100vw);
+            }
+        }
+
+        .floating-message {
+            /* Сообщения тоже появляются слева */
+            left: -200px;
+            animation: floatMessage 15s linear forwards;
+        }
+
+        @keyframes floatMessage {
+            0% {
+                opacity: 0;
+                transform: translateX(0) scale(0.5);
+            }
+            10% {
+                opacity: 1;
+                transform: translateX(100px) scale(1);
+            }
+            90% {
+                opacity: 1;
+                transform: translateX(calc(100vw - 200px)) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(100vw) scale(0.5);
+            }
+        }
+
+        /* Остальные стили остаются как в предыдущем ответе */
+    </style>
+</head>
+<body>
+    <!-- Кнопка переключения темы в левом нижнем углу -->
+    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+    
+    <div class="stars" id="stars"></div>
+    <div class="clouds" id="clouds"></div>
+    <div class="notification" id="notification"></div>
+
+    <!-- Остальная HTML структура остается без изменений -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-moon"></i>
+            <span>ИИ Сонник</span>
+        </div>
+        <div class="user-menu">
+            <div class="user-icon" id="userIcon">
+                <i class="fas fa-user" id="userIconSymbol"></i>
+                <span id="userInitials" style="display: none;"></span>
+            </div>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <button id="registerBtn"><i class="fas fa-user-plus"></i> Регистрация</button>
+                <button id="loginBtn"><i class="fas fa-sign-in-alt"></i> Вход</button>
+                <button id="paymentBtn"><i class="fas fa-credit-card"></i> Оплатить</button>
+                <button id="logoutBtn" style="display: none;"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>ИИ Толкователь снов</h2>
+            <p>Опишите свой сон, и я помогу его растолковать</p>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+        </div>
+    </div>
+    
+    <div class="input-container">
+        <div class="input-wrapper">
+            <textarea class="text-input" id="messageInput" placeholder="Опишите свой сон..." rows="1" disabled></textarea>
+            <div class="action-buttons">
+                <button class="btn btn-voice" id="voiceBtn" aria-label="Голосовой ввод" disabled>
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="btn btn-send" id="sendBtn" aria-label="Отправить сообщение" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна остаются без изменений -->
+    <div class="modal" id="registerModal">...</div>
+    <div class="modal" id="loginModal">...</div>
+    <div class="modal" id="paymentModal">...</div>
+
+    <script>
+        // JavaScript код остается таким же как в предыдущем ответе,
+        // но добавляем функцию createClouds() для облаков слева:
+
+        function createClouds() {
+            const cloudsContainer = document.getElementById('clouds');
+            const cloudsCount = 15;
+            
+            for (let i = 0; i < cloudsCount; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                
+                const width = Math.random() * 120 + 80;
+                const height = width * 0.5;
+                cloud.style.width = `${width}px`;
+                cloud.style.height = `${height}px`;
+                
+                // Облака появляются слева на разной высоте
+                cloud.style.left = `-${width}px`;
+                cloud.style.top = `${Math.random() * 100}vh`;
+                
+                const duration = Math.random() * 40 + 20;
+                cloud.style.animationDuration = `${duration}s`;
+                cloud.style.animationDelay = `${Math.random() * 10}s`;
+                
+                cloudsContainer.appendChild(cloud);
+            }
+        }
+
+        // Остальной JavaScript код остается без изменений
+    </script>
+</body>
+</html>
