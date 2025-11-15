@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "npm run start:all"
+startCommand = "npm run install:py-deps && npm run start:all"
 
 [env]
 PORT = "8080"
@@ -11,3 +11,4 @@ PYTHONIOENCODING = "utf-8"
 LANG = "C.UTF-8"
 LC_ALL = "C.UTF-8"
 PYTHONUTF8 = "1"
+TELEGRAM_BOT_TOKEN = "8328551756:AAEWPTFIWrREap94-pL86p6-nWM_3UJcB2g"
