@@ -5,13 +5,14 @@ import requests
 from datetime import datetime
 import base64
 from io import BytesIO
-from gtts import gTTS
-import os
 import logging
 import hashlib
 
 # Настройка логирования
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Конфигурация OpenRouter API
@@ -24,50 +25,56 @@ class Database:
         self.init_database()
 
     def init_database(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                phone TEXT UNIQUE NOT NULL,
-                name TEXT NOT NULL,
-                birth_date TEXT NOT NULL,
-                password TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            )
-        ''')
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS chats (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                chat_type TEXT NOT NULL,
-                telegram_chat_id TEXT,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES users (id)
-            )
-        ''')
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                chat_id INTEGER NOT NULL,
-                role TEXT NOT NULL,
-                content TEXT NOT NULL,
-                timestamp TEXT NOT NULL,
-                FOREIGN KEY (chat_id) REFERENCES chats (id)
-            )
-        ''')
-        
-        conn.commit()
-        conn.close()
+        """Инициализация базы данных"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    phone TEXT UNIQUE NOT NULL,
+                    name TEXT NOT NULL,
+                    birth_date TEXT NOT NULL,
+                    password TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+            ''')
+            
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS chats (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    chat_type TEXT NOT NULL,
+                    telegram_chat_id TEXT,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (user_id) REFERENCES users (id)
+                )
+            ''')
+            
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    chat_id INTEGER NOT NULL,
+                    role TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    timestamp TEXT NOT NULL,
+                    FOREIGN KEY (chat_id) REFERENCES chats (id)
+                )
+            ''')
+            
+            conn.commit()
+            conn.close()
+            logger.info("Database initialized successfully")
+        except Exception as e:
+            logger.error(f"Database initialization error: {e}")
 
     def create_user(self, phone, name, birth_date, password):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
+        """Создание нового пользователя"""
         try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
             cursor.execute('''
                 INSERT INTO users (phone, name, birth_date, password, created_at)
                 VALUES (?, ?, ?, ?, ?)
@@ -75,99 +82,121 @@ class Database:
             
             user_id = cursor.lastrowid
             conn.commit()
+            conn.close()
             return user_id
         except sqlite3.IntegrityError:
             raise ValueError("Пользователь с таким номером телефона уже существует")
-        finally:
-            conn.close()
+        except Exception as e:
+            logger.error(f"Create user error: {e}")
+            raise
 
     def get_user_by_phone(self, phone):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT id, phone, name, birth_date, password, created_at 
-            FROM users WHERE phone = ?
-        ''', (phone,))
-        
-        row = cursor.fetchone()
-        conn.close()
-        
-        if row:
-            return {
-                'id': row[0],
-                'phone': row[1],
-                'name': row[2],
-                'birth_date': row[3],
-                'password': row[4],
-                'created_at': row[5]
-            }
-        return None
+        """Получение пользователя по номеру телефона"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT id, phone, name, birth_date, password, created_at 
+                FROM users WHERE phone = ?
+            ''', (phone,))
+            
+            row = cursor.fetchone()
+            conn.close()
+            
+            if row:
+                return {
+                    'id': row[0],
+                    'phone': row[1],
+                    'name': row[2],
+                    'birth_date': row[3],
+                    'password': row[4],
+                    'created_at': row[5]
+                }
+            return None
+        except Exception as e:
+            logger.error(f"Get user error: {e}")
+            return None
 
     def get_or_create_chat(self, user_id, chat_type='web', telegram_chat_id=None):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        if chat_type == 'telegram' and telegram_chat_id:
-            cursor.execute('''
-                SELECT id FROM chats 
-                WHERE user_id = ? AND chat_type = ? AND telegram_chat_id = ?
-            ''', (user_id, chat_type, telegram_chat_id))
-        else:
-            cursor.execute('''
-                SELECT id FROM chats 
-                WHERE user_id = ? AND chat_type = ?
-            ''', (user_id, chat_type))
-        
-        row = cursor.fetchone()
-        
-        if row:
-            chat_id = row[0]
-        else:
-            cursor.execute('''
-                INSERT INTO chats (user_id, chat_type, telegram_chat_id, created_at)
-                VALUES (?, ?, ?, ?)
-            ''', (user_id, chat_type, telegram_chat_id, datetime.now().isoformat()))
-            chat_id = cursor.lastrowid
-            conn.commit()
-        
-        conn.close()
-        return chat_id
+        """Получение или создание чата"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            if chat_type == 'telegram' and telegram_chat_id:
+                cursor.execute('''
+                    SELECT id FROM chats 
+                    WHERE user_id = ? AND chat_type = ? AND telegram_chat_id = ?
+                ''', (user_id, chat_type, telegram_chat_id))
+            else:
+                cursor.execute('''
+                    SELECT id FROM chats 
+                    WHERE user_id = ? AND chat_type = ?
+                ''', (user_id, chat_type))
+            
+            row = cursor.fetchone()
+            
+            if row:
+                chat_id = row[0]
+            else:
+                cursor.execute('''
+                    INSERT INTO chats (user_id, chat_type, telegram_chat_id, created_at)
+                    VALUES (?, ?, ?, ?)
+                ''', (user_id, chat_type, telegram_chat_id, datetime.now().isoformat()))
+                chat_id = cursor.lastrowid
+                conn.commit()
+            
+            conn.close()
+            return chat_id
+        except Exception as e:
+            logger.error(f"Get or create chat error: {e}")
+            raise
 
     def save_message(self, chat_id, role, content):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO messages (chat_id, role, content, timestamp)
-            VALUES (?, ?, ?, ?)
-        ''', (chat_id, role, content, datetime.now().isoformat()))
-        
-        conn.commit()
-        conn.close()
+        """Сохранение сообщения в базу данных"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                INSERT INTO messages (chat_id, role, content, timestamp)
+                VALUES (?, ?, ?, ?)
+            ''', (chat_id, role, content, datetime.now().isoformat()))
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Save message error: {e}")
+            raise
 
     def get_chat_history(self, chat_id, limit=10):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT role, content, timestamp 
-            FROM messages 
-            WHERE chat_id = ? 
-            ORDER BY timestamp DESC 
-            LIMIT ?
-        ''', (chat_id, limit))
-        
-        history = []
-        for row in cursor.fetchall():
-            history.append({
-                'role': row[0],
-                'content': row[1],
-                'timestamp': row[2]
-            })
-        
-        conn.close()
-        return list(reversed(history))
+        """Получение истории чата"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT role, content, timestamp 
+                FROM messages 
+                WHERE chat_id = ? 
+                ORDER BY timestamp DESC 
+                LIMIT ?
+            ''', (chat_id, limit))
+            
+            history = []
+            for row in cursor.fetchall():
+                history.append({
+                    'role': row[0],
+                    'content': row[1],
+                    'timestamp': row[2]
+                })
+            
+            conn.close()
+            return list(reversed(history))
+        except Exception as e:
+            logger.error(f"Get chat history error: {e}")
+            return []
 
 class AIService:
     def __init__(self):
@@ -175,19 +204,20 @@ class AIService:
         self.api_url = OPENROUTER_API_URL
 
     def get_ai_response(self, user_message, user_data, chat_history):
-        system_prompt = self._create_system_prompt(user_data)
-        
-        messages = [{"role": "system", "content": system_prompt}]
-        
-        for msg in chat_history:
-            messages.append({
-                "role": "user" if msg['role'] == 'user' else "assistant",
-                "content": msg['content']
-            })
-        
-        messages.append({"role": "user", "content": user_message})
-        
+        """Получение ответа от AI"""
         try:
+            system_prompt = self._create_system_prompt(user_data)
+            
+            messages = [{"role": "system", "content": system_prompt}]
+            
+            for msg in chat_history:
+                messages.append({
+                    "role": "user" if msg['role'] == 'user' else "assistant",
+                    "content": msg['content']
+                })
+            
+            messages.append({"role": "user", "content": user_message})
+            
             response = requests.post(
                 url=self.api_url,
                 headers={
@@ -196,11 +226,11 @@ class AIService:
                     "HTTP-Referer": "https://dream-interpreter.com",
                     "X-Title": "ИИ Сонник"
                 },
-                data=json.dumps({
+                json={
                     "model": "deepseek/deepseek-chat-v3-0324",
                     "messages": messages,
                     "max_tokens": 1000
-                }),
+                },
                 timeout=30
             )
             
@@ -208,7 +238,7 @@ class AIService:
                 data = response.json()
                 return data['choices'][0]['message']['content']
             else:
-                logger.error(f"OpenRouter API error: {response.status_code}")
+                logger.error(f"OpenRouter API error: {response.status_code} - {response.text}")
                 return "Извините, произошла ошибка при обработке вашего запроса."
                 
         except Exception as e:
@@ -216,12 +246,14 @@ class AIService:
             return "Извините, сервис временно недоступен."
 
     def _create_system_prompt(self, user_data):
-        age = self._calculate_age(user_data['birth_date'])
+        """Создание системного промпта"""
+        age = self._calculate_age(user_data.get('birth_date', ''))
+        name = user_data.get('name', 'пользователь')
         
         return f"""Ты - опытный психолог-толкователь снов. Твоя задача - анализировать сны и давать психологическую интерпретацию.
 
 Информация о пользователе:
-- Имя: {user_data['name']}
+- Имя: {name}
 - Возраст: {age} лет
 
 Твои особенности:
@@ -234,7 +266,10 @@ class AIService:
 Помни: сны - это способ подсознания общаться с нами. Твоя цель - помочь пользователю лучше понять себя."""
 
     def _calculate_age(self, birth_date_str):
+        """Расчет возраста"""
         try:
+            if not birth_date_str:
+                return 0
             birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d')
             today = datetime.now()
             age = today.year - birth_date.year
@@ -249,14 +284,15 @@ class AIService:
 class TTSService:
     @staticmethod
     def text_to_speech(text):
+        """Преобразование текста в речь"""
         try:
-            tts = gTTS(text=text, lang='ru')
-            audio_buffer = BytesIO()
-            tts.write_to_fp(audio_buffer)
-            audio_buffer.seek(0)
+            # Для Railway используем fallback, так как gTTS может не работать
+            # В реальном приложении можно использовать другие TTS сервисы
+            logger.info(f"TTS requested for text: {text[:100]}...")
             
-            audio_base64 = base64.b64encode(audio_buffer.read()).decode('utf-8')
-            return audio_base64
+            # Заглушка для демо - в реальном приложении подключите настоящий TTS
+            return None
+            
         except Exception as e:
             logger.error(f"TTS error: {e}")
             return None
@@ -281,105 +317,129 @@ class BackendAPI:
                 'success': False,
                 'message': str(e)
             }
+        except Exception as e:
+            logger.error(f"Register user error: {e}")
+            return {
+                'success': False,
+                'message': 'Внутренняя ошибка сервера'
+            }
     
     def login_user(self, phone, password):
         """Вход пользователя"""
-        user = self.db.get_user_by_phone(phone)
-        
-        if user and user['password'] == password:
-            return {
-                'success': True,
-                'message': 'Вход выполнен успешно!',
-                'user': {
-                    'id': user['id'],
-                    'name': user['name'],
-                    'phone': user['phone'],
-                    'birth_date': user['birth_date']
+        try:
+            user = self.db.get_user_by_phone(phone)
+            
+            if user and user['password'] == password:
+                return {
+                    'success': True,
+                    'message': 'Вход выполнен успешно!',
+                    'user': {
+                        'id': user['id'],
+                        'name': user['name'],
+                        'phone': user['phone'],
+                        'birth_date': user['birth_date']
+                    }
                 }
-            }
-        else:
+            else:
+                return {
+                    'success': False,
+                    'message': 'Неверный номер телефона или пароль'
+                }
+        except Exception as e:
+            logger.error(f"Login user error: {e}")
             return {
                 'success': False,
-                'message': 'Неверный номер телефона или пароль'
+                'message': 'Внутренняя ошибка сервера'
             }
     
     def send_message(self, user_data, message):
         """Отправка сообщения и получение ответа от AI"""
-        user = self.db.get_user_by_phone(user_data['phone'])
-        if not user:
-            return {'error': 'Пользователь не найден'}
-        
-        chat_id = self.db.get_or_create_chat(user['id'], 'web')
-        self.db.save_message(chat_id, 'user', message)
-        
-        chat_history = self.db.get_chat_history(chat_id)
-        ai_response = self.ai_service.get_ai_response(message, user, chat_history)
-        
-        self.db.save_message(chat_id, 'assistant', ai_response)
-        
-        return {
-            'success': True,
-            'response': ai_response
-        }
+        try:
+            user = self.db.get_user_by_phone(user_data['phone'])
+            if not user:
+                return {'success': False, 'error': 'Пользователь не найден'}
+            
+            chat_id = self.db.get_or_create_chat(user['id'], 'web')
+            self.db.save_message(chat_id, 'user', message)
+            
+            chat_history = self.db.get_chat_history(chat_id)
+            ai_response = self.ai_service.get_ai_response(message, user, chat_history)
+            
+            self.db.save_message(chat_id, 'assistant', ai_response)
+            
+            return {
+                'success': True,
+                'response': ai_response
+            }
+        except Exception as e:
+            logger.error(f"Send message error: {e}")
+            return {
+                'success': False,
+                'message': 'Ошибка отправки сообщения'
+            }
     
     def get_chat_history(self, user_data):
         """Получение истории чата"""
-        user = self.db.get_user_by_phone(user_data['phone'])
-        if not user:
-            return {'error': 'Пользователь не найден'}
-        
-        chat_id = self.db.get_or_create_chat(user['id'], 'web')
-        history = self.db.get_chat_history(chat_id)
-        
-        return {'history': history}
+        try:
+            user = self.db.get_user_by_phone(user_data['phone'])
+            if not user:
+                return {'success': False, 'error': 'Пользователь не найден'}
+            
+            chat_id = self.db.get_or_create_chat(user['id'], 'web')
+            history = self.db.get_chat_history(chat_id)
+            
+            return {'success': True, 'history': history}
+        except Exception as e:
+            logger.error(f"Get chat history error: {e}")
+            return {'success': False, 'history': []}
     
     def text_to_speech(self, text):
         """Преобразование текста в речь"""
-        audio_base64 = self.tts_service.text_to_speech(text)
-        
-        if audio_base64:
-            return {
-                'success': True,
-                'audio': audio_base64
-            }
-        else:
+        try:
+            audio_base64 = self.tts_service.text_to_speech(text)
+            
+            if audio_base64:
+                return {
+                    'success': True,
+                    'audio': audio_base64
+                }
+            else:
+                return {
+                    'success': False,
+                    'message': 'Озвучка временно недоступна'
+                }
+        except Exception as e:
+            logger.error(f"Text to speech error: {e}")
             return {
                 'success': False,
                 'message': 'Ошибка преобразования текста в речь'
             }
     
     def create_payment(self, plan='basic'):
-        """Создание платежа через Robokassa"""
-        merchant_login = "demo"
-        password_1 = "password_1"
-        invid = int(datetime.now().timestamp())
-        
-        plans = {
-            'basic': {'price': '299', 'name': 'Базовый'},
-            'premium': {'price': '799', 'name': 'Премиум'}
-        }
-        
-        plan_data = plans.get(plan, plans['basic'])
-        description = f"Тариф '{plan_data['name']}' для ИИ Сонник"
-        
-        # Генерация подписи (упрощенная)
-        signature = f"{merchant_login}:{plan_data['price']}:{invid}:{password_1}"
-        signature_value = hashlib.md5(signature.encode()).hexdigest()
-        
-        payment_data = {
-            'MerchantLogin': merchant_login,
-            'OutSum': plan_data['price'],
-            'InvId': invid,
-            'Description': description,
-            'SignatureValue': signature_value,
-            'IsTest': 1
-        }
-        
-        return {
-            'success': True,
-            'payment_url': 'https://auth.robokassa.ru/Merchant/Index.aspx',
-            'payment_data': payment_data
-        }
+        """Создание платежа"""
+        try:
+            plans = {
+                'basic': {'price': '299', 'name': 'Базовый'},
+                'premium': {'price': '799', 'name': 'Премиум'}
+            }
+            
+            plan_data = plans.get(plan, plans['basic'])
+            
+            return {
+                'success': True,
+                'payment_url': '#',
+                'payment_data': {
+                    'plan': plan,
+                    'price': plan_data['price'],
+                    'name': plan_data['name']
+                }
+            }
+        except Exception as e:
+            logger.error(f"Create payment error: {e}")
+            return {
+                'success': False,
+                'message': 'Ошибка создания платежа'
+            }
 
 # Глобальный экземпляр API
 backend_api = BackendAPI()
@@ -403,41 +463,53 @@ def text_to_speech(text):
 def create_payment(plan='basic'):
     return backend_api.create_payment(plan)
 
-if __name__ == '__main__':
+# Основная функция для обработки команд
+def main():
     if len(sys.argv) > 1:
         try:
             args = json.loads(sys.argv[1])
             action = args.get('action')
+            logger.info(f"Processing action: {action}")
             
             if action == 'register':
                 result = register_user(
-                    args['phone'], 
-                    args['name'], 
-                    args['birth_date'], 
-                    args['password']
+                    args.get('phone', ''), 
+                    args.get('name', ''), 
+                    args.get('birth_date', ''), 
+                    args.get('password', '')
                 )
             elif action == 'login':
-                result = login_user(args['phone'], args['password'])
+                result = login_user(
+                    args.get('phone', ''), 
+                    args.get('password', '')
+                )
             elif action == 'send_message':
-                result = send_message(args['user_data'], args['message'])
+                result = send_message(
+                    args.get('user_data', {}), 
+                    args.get('message', '')
+                )
             elif action == 'get_chat_history':
-                result = get_chat_history(args['user_data'])
+                result = get_chat_history(args.get('user_data', {}))
             elif action == 'text_to_speech':
-                result = text_to_speech(args['text'])
+                result = text_to_speech(args.get('text', ''))
             elif action == 'create_payment':
                 result = create_payment(args.get('plan', 'basic'))
             else:
-                result = {'error': 'Unknown action'}
+                result = {'success': False, 'error': 'Unknown action'}
             
             print(json.dumps(result))
             
         except Exception as e:
+            logger.error(f"Main execution error: {e}")
             print(json.dumps({
                 'success': False,
                 'message': f'Error: {str(e)}'
             }))
     else:
-        # Тестирование функционала
-        print("Инициализация базы данных...")
+        # Инициализация базы данных
+        logger.info("Initializing database...")
         db = Database()
-        print("Готово!")
+        logger.info("Database ready!")
+
+if __name__ == '__main__':
+    main()
