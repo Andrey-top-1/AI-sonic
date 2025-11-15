@@ -1,29 +1,26 @@
 FROM node:18-alpine
 
-# Install Python and required dependencies
+# Устанавливаем Python3 и необходимые зависимости
 RUN apk add --no-cache \
     python3 \
     py3-pip \
     build-base \
-    python3-dev \
-    && ln -sf python3 /usr/bin/python
+    python3-dev
 
-# Set working directory
-WORKDIR /app
-
-# Copy package files first for better caching
-COPY package*.json ./
-RUN npm install
-
-# Copy Python requirements and install
+# Устанавливаем зависимости Python
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Устанавливаем зависимости Node.js
+COPY package*.json .
+RUN npm install
+
+# Копируем исходный код
 COPY . .
 
-# Expose port
+# Создаем симлинк python3 -> python если нужно
+RUN ln -sf python3 /usr/bin/python || true
+
 EXPOSE 8080
 
-# Start application
 CMD ["node", "api.js"]
