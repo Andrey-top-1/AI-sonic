@@ -1189,73 +1189,70 @@
             }
         }
 
-        // TTS сервис с использованием Web Speech API и резервного варианта через Google TTS
         // Исправленный TTS сервис
-class TTSService {
-    constructor() {
-        this.speechSynthesis = window.speechSynthesis;
-        this.isPlaying = false;
-        this.currentUtterance = null;
-    }
-
-    async speak(text) {
-        // Останавливаем текущее воспроизведение
-        this.stop();
-        
-        return new Promise((resolve) => {
-            if (!this.speechSynthesis) {
-                console.log('Озвучка не поддерживается в этом браузере');
-                resolve();
-                return;
-            }
-
-            // Создаем utterance
-            this.currentUtterance = new SpeechSynthesisUtterance(text);
-            this.currentUtterance.lang = 'ru-RU';
-            this.currentUtterance.rate = 0.9;
-            this.currentUtterance.pitch = 1.0;
-            this.currentUtterance.volume = 1.0;
-
-            // События
-            this.currentUtterance.onstart = () => {
-                this.isPlaying = true;
-                console.log('Озвучка началась');
-            };
-
-            this.currentUtterance.onend = () => {
+        class TTSService {
+            constructor() {
+                this.speechSynthesis = window.speechSynthesis;
                 this.isPlaying = false;
                 this.currentUtterance = null;
-                console.log('Озвучка завершена');
-                resolve();
-            };
+            }
 
-            this.currentUtterance.onerror = (event) => {
-                console.error('Ошибка озвучки:', event);
+            async speak(text) {
+                // Останавливаем текущее воспроизведение
+                this.stop();
+                
+                return new Promise((resolve) => {
+                    if (!this.speechSynthesis) {
+                        console.log('Озвучка не поддерживается в этом браузере');
+                        resolve();
+                        return;
+                    }
+
+                    // Создаем utterance
+                    this.currentUtterance = new SpeechSynthesisUtterance(text);
+                    this.currentUtterance.lang = 'ru-RU';
+                    this.currentUtterance.rate = 0.9;
+                    this.currentUtterance.pitch = 1.0;
+                    this.currentUtterance.volume = 1.0;
+
+                    // События
+                    this.currentUtterance.onstart = () => {
+                        this.isPlaying = true;
+                        console.log('Озвучка началась');
+                    };
+
+                    this.currentUtterance.onend = () => {
+                        this.isPlaying = false;
+                        this.currentUtterance = null;
+                        console.log('Озвучка завершена');
+                        resolve();
+                    };
+
+                    this.currentUtterance.onerror = (event) => {
+                        console.error('Ошибка озвучки:', event);
+                        this.isPlaying = false;
+                        this.currentUtterance = null;
+                        resolve();
+                    };
+
+                    // Запускаем озвучку
+                    try {
+                        this.speechSynthesis.speak(this.currentUtterance);
+                    } catch (error) {
+                        console.error('Ошибка запуска озвучки:', error);
+                        resolve();
+                    }
+                });
+            }
+
+            stop() {
+                if (this.speechSynthesis && this.isPlaying) {
+                    this.speechSynthesis.cancel();
+                }
                 this.isPlaying = false;
                 this.currentUtterance = null;
-                resolve();
-            };
-
-            // Запускаем озвучку
-            try {
-                this.speechSynthesis.speak(this.currentUtterance);
-            } catch (error) {
-                console.error('Ошибка запуска озвучки:', error);
-                resolve();
             }
-        });
-    }
-
-    stop() {
-        if (this.speechSynthesis && this.isPlaying) {
-            this.speechSynthesis.cancel();
         }
-        this.isPlaying = false;
-        this.currentUtterance = null;
-    }
-}
-
-            
 
         // Инициализация API клиента и TTS сервиса
         const apiClient = new ApiClient();
@@ -1770,4 +1767,5 @@ class TTSService {
     </script>
 </body>
 </html>
+
 
