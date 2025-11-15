@@ -1,17 +1,13 @@
-FROM node:18-alpine
+FROM node:18-bullseye
 
-# Устанавливаем Python3 и необходимые зависимости
-RUN apk add --no-cache \
+# Устанавливаем Python3 и pip в Debian-based образе
+RUN apt-get update && apt-get install -y \
     python3 \
-    py3-pip \
-    build-base \
-    python3-dev
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
 
-# Создаем виртуальное окружение Python
-RUN python3 -m venv /opt/venv
-
-# Активируем виртуальное окружение и устанавливаем зависимости
-ENV PATH="/opt/venv/bin:$PATH"
+# Устанавливаем зависимости Python
+COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Устанавливаем зависимости Node.js
