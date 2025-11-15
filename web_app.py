@@ -380,19 +380,6 @@ class BackendAPI:
 # Глобальный экземпляр API
 backend_api = BackendAPI()
 
-# Функции для использования извне
-def register_user(phone, name, birth_date, password):
-    return backend_api.register_user(phone, name, birth_date, password)
-
-def login_user(phone, password):
-    return backend_api.login_user(phone, password)
-
-def send_message(user_data, message):
-    return backend_api.send_message(user_data, message)
-
-def get_chat_history(user_data):
-    return backend_api.get_chat_history(user_data)
-
 # Основная функция для обработки команд
 def main():
     if len(sys.argv) > 1:
@@ -401,29 +388,29 @@ def main():
             action = args.get('action')
             
             if action == 'register':
-                result = register_user(
+                result = backend_api.register_user(
                     args['phone'], 
                     args['name'], 
                     args['birth_date'], 
                     args['password']
                 )
             elif action == 'login':
-                result = login_user(args['phone'], args['password'])
+                result = backend_api.login_user(args['phone'], args['password'])
             elif action == 'send_message':
-                result = send_message(args['user_data'], args['message'])
+                result = backend_api.send_message(args['user_data'], args['message'])
             elif action == 'get_chat_history':
-                result = get_chat_history(args['user_data'])
+                result = backend_api.get_chat_history(args['user_data'])
             else:
                 result = {'success': False, 'error': 'Unknown action'}
             
-            print(json.dumps(result))
+            print(json.dumps(result, ensure_ascii=False))
             
         except Exception as e:
             logger.error(f"Main execution error: {e}")
             print(json.dumps({
                 'success': False,
                 'message': f'Error: {str(e)}'
-            }))
+            }, ensure_ascii=False))
     else:
         # Инициализация базы данных
         print("Initializing database...")
