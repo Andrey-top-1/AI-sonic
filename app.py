@@ -4,11 +4,8 @@ import sqlite3
 import requests
 from datetime import datetime
 import base64
-from io import BytesIO
 import logging
 import hashlib
-import urllib.parse
-import urllib.request
 
 # Настройка логирования
 logging.basicConfig(
@@ -126,16 +123,10 @@ class Database:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
-            if chat_type == 'telegram' and telegram_chat_id:
-                cursor.execute('''
-                    SELECT id FROM chats 
-                    WHERE user_id = ? AND chat_type = ? AND telegram_chat_id = ?
-                ''', (user_id, chat_type, telegram_chat_id))
-            else:
-                cursor.execute('''
-                    SELECT id FROM chats 
-                    WHERE user_id = ? AND chat_type = ?
-                ''', (user_id, chat_type))
+            cursor.execute('''
+                SELECT id FROM chats 
+                WHERE user_id = ? AND chat_type = ?
+            ''', (user_id, chat_type))
             
             row = cursor.fetchone()
             
@@ -212,7 +203,7 @@ class AIService:
             
             messages = [{"role": "system", "content": system_prompt}]
             
-            for msg in chat_history:
+            for msg in chat_history[-5:]:  # Берем последние 5 сообщений для контекста
                 messages.append({
                     "role": "user" if msg['role'] == 'user' else "assistant",
                     "content": msg['content']
@@ -231,7 +222,7 @@ class AIService:
                 json={
                     "model": "deepseek/deepseek-chat-v3-0324",
                     "messages": messages,
-                    "max_tokens": 1000
+                    "max_tokens": 800
                 },
                 timeout=30
             )
@@ -240,7 +231,7 @@ class AIService:
                 data = response.json()
                 return data['choices'][0]['message']['content']
             else:
-                logger.error(f"OpenRouter API error: {response.status_code} - {response.text}")
+                logger.error(f"OpenRouter API error: {response.status_code}")
                 return "Извините, произошла ошибка при обработке вашего запроса."
                 
         except Exception as e:
@@ -283,40 +274,10 @@ class AIService:
         except:
             return 0
 
-class TTSService:
-    @staticmethod
-    def text_to_speech(text):
-        """Преобразование текста в речь с использованием внешнего сервиса"""
-        try:
-            logger.info(f"TTS requested for text: {text[:100]}...")
-            
-            # Используем Yandex SpeechKit через публичный прокси
-            # Кодируем текст для URL
-            encoded_text = urllib.parse.quote(text)
-            
-            # URL для Yandex SpeechKit (бесплатный, без API ключа)
-            url = f"https://tts.cyzon.us/tts?text={encoded_text}&lang=ru"
-            
-            # Скачиваем аудио
-            response = urllib.request.urlopen(url)
-            audio_data = response.read()
-            
-            # Конвертируем в base64
-            audio_base64 = base64.b64encode(audio_data).decode('utf-8')
-            
-            logger.info("TTS successful")
-            return audio_base64
-            
-        except Exception as e:
-            logger.error(f"TTS error: {e}")
-            # Fallback: возвращаем None, чтобы фронтенд использовал Web Speech API
-            return None
-
 class BackendAPI:
     def __init__(self):
         self.db = Database()
         self.ai_service = AIService()
-        self.tts_service = TTSService()
     
     def register_user(self, phone, name, birth_date, password):
         """Регистрация нового пользователя"""
@@ -411,49 +372,17 @@ class BackendAPI:
     def text_to_speech(self, text):
         """Преобразование текста в речь"""
         try:
-            audio_base64 = self.tts_service.text_to_speech(text)
-            
-            if audio_base64:
-                return {
-                    'success': True,
-                    'audio': audio_base64
-                }
-            else:
-                return {
-                    'success': False,
-                    'message': 'Озвучка временно недоступна'
-                }
+            # Простая заглушка для TTS
+            logger.info(f"TTS requested for text: {text[:100]}...")
+            return {
+                'success': False,
+                'message': 'Используйте встроенную озвучку браузера'
+            }
         except Exception as e:
             logger.error(f"Text to speech error: {e}")
             return {
                 'success': False,
                 'message': 'Ошибка преобразования текста в речь'
-            }
-    
-    def create_payment(self, plan='basic'):
-        """Создание платежа"""
-        try:
-            plans = {
-                'basic': {'price': '299', 'name': 'Базовый'},
-                'premium': {'price': '799', 'name': 'Премиум'}
-            }
-            
-            plan_data = plans.get(plan, plans['basic'])
-            
-            return {
-                'success': True,
-                'payment_url': '#',
-                'payment_data': {
-                    'plan': plan,
-                    'price': plan_data['price'],
-                    'name': plan_data['name']
-                }
-            }
-        except Exception as e:
-            logger.error(f"Create payment error: {e}")
-            return {
-                'success': False,
-                'message': 'Ошибка создания платежа'
             }
 
 # Глобальный экземпляр API
@@ -474,9 +403,6 @@ def get_chat_history(user_data):
 
 def text_to_speech(text):
     return backend_api.text_to_speech(text)
-
-def create_payment(plan='basic'):
-    return backend_api.create_payment(plan)
 
 # Основная функция для обработки команд
 def main():
@@ -507,8 +433,6 @@ def main():
                 result = get_chat_history(args.get('user_data', {}))
             elif action == 'text_to_speech':
                 result = text_to_speech(args.get('text', ''))
-            elif action == 'create_payment':
-                result = create_payment(args.get('plan', 'basic'))
             else:
                 result = {'success': False, 'error': 'Unknown action'}
             
@@ -525,6 +449,7 @@ def main():
         logger.info("Initializing database...")
         db = Database()
         logger.info("Database ready!")
+        print("Python backend initialized successfully")
 
 if __name__ == '__main__':
     main()
