@@ -5,6 +5,11 @@ import sys
 import logging
 from datetime import datetime
 import os
+import io
+
+# Принудительная установка UTF-8 кодировки
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 # Настройка логирования ТОЛЬКО в stderr
 logging.basicConfig(
@@ -153,21 +158,24 @@ class AIService:
             
             logger.info(f"Sending request to AI with {len(messages)} messages")
             
-            # Отправляем запрос к OpenRouter API
+            # Подготавливаем данные для запроса с UTF-8 кодировкой
+            request_data = {
+                "model": "deepseek/deepseek-chat-v3-0324",
+                "messages": messages,
+                "max_tokens": 1000,
+                "temperature": 0.7
+            }
+            
+            # Отправляем запрос к OpenRouter API с правильной кодировкой
             response = requests.post(
                 url=self.api_url,
                 headers={
                     "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json; charset=utf-8",
+                    "Content-Type": "application/json",
                     "HTTP-Referer": "https://dream-interpreter.com",
                     "X-Title": "ИИ Сонник"
                 },
-                json={
-                    "model": "deepseek/deepseek-chat-v3-0324",
-                    "messages": messages,
-                    "max_tokens": 1000,
-                    "temperature": 0.7
-                },
+                json=request_data,
                 timeout=30
             )
             
@@ -180,6 +188,9 @@ class AIService:
                 logger.error(f"OpenRouter API error: {response.status_code} - {response.text}")
                 return "Извините, произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз."
                 
+        except requests.exceptions.RequestException as e:
+            logger.error(f"AI API request error: {str(e)}")
+            return "Извините, произошла ошибка соединения. Пожалуйста, попробуйте еще раз."
         except Exception as e:
             logger.error(f"AI API error: {str(e)}")
             return "Извините, сервис временно недоступен. Пожалуйста, попробуйте позже."
@@ -204,7 +215,7 @@ class AIService:
 6. Связывай символы сна с реальной жизнью пользователя
 7. Учитывай возрастные особенности
 
-ВАЖНЫЕ ПРИНЦИПЫ:
+ВАЖНЫЕ ПРИНЦИПИ:
 - Сны - это способ подсознания общаться с сознанием
 - Каждый символ имеет значение
 - Контекст предыдущих снов важен для точной интерпретации
@@ -368,7 +379,7 @@ def main():
                 result = {'success': False, 'error': 'Unknown action'}
             
             # Выводим ТОЛЬКО JSON в stdout
-            result_json = json.dumps(result, ensure_ascii=False)
+            result_json = json.dumps(result, ensure_ascii=False, separators=(',', ':'))
             print(result_json)
             
         except Exception as e:
@@ -377,7 +388,7 @@ def main():
                 'success': False,
                 'message': f'Error: {str(e)}'
             }
-            error_json = json.dumps(error_result, ensure_ascii=False)
+            error_json = json.dumps(error_result, ensure_ascii=False, separators=(',', ':'))
             print(error_json)
     else:
         # Если нет аргументов, просто выводим сообщение в stderr
