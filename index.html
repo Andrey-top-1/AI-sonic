@@ -8,14 +8,21 @@
     <style>
         :root {
             --primary-gradient: linear-gradient(135deg, #0c0c2b 0%, #1a1a3e 100%);
+            --primary-gradient-light: linear-gradient(135deg, #87CEEB 0%, #E0F7FA 100%);
             --chat-bg: rgba(25, 25, 50, 0.9);
+            --chat-bg-light: rgba(255, 255, 255, 0.95);
             --user-msg: #4a4a8a;
+            --user-msg-light: #4a76a8;
             --bot-msg: #2d2d5a;
+            --bot-msg-light: #e6f2ff;
             --accent: #ff6b6b;
-            --accent-hover: #ff5252;
+            --accent-light: #ff5252;
             --text-primary: #f1f1f1;
+            --text-primary-light: #333333;
             --text-secondary: #b8b8d6;
+            --text-secondary-light: #666666;
             --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.1);
             --radius: 18px;
         }
 
@@ -33,28 +40,122 @@
             flex-direction: column;
             color: var(--text-primary);
             overflow-x: hidden;
+            transition: all 0.5s ease;
         }
 
-        .stars {
+        body.light-theme {
+            background: var(--primary-gradient-light);
+            color: var(--text-primary-light);
+        }
+
+        .stars, .clouds {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: -1;
+            pointer-events: none;
+        }
+
+        .clouds {
+            display: none;
+        }
+
+        body.light-theme .stars {
+            display: none;
+        }
+
+        body.light-theme .clouds {
+            display: block;
+        }
+
+        .star, .cloud {
+            position: absolute;
+            animation: fall linear infinite;
         }
 
         .star {
-            position: absolute;
             background-color: white;
             border-radius: 50%;
-            animation: fall linear infinite;
+        }
+
+        .cloud {
+            background: white;
+            border-radius: 50px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            opacity: 0.9;
+        }
+
+        .floating-message {
+            position: absolute;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+            animation: floatMessage 15s linear forwards;
+        }
+
+        body.light-theme .floating-message {
+            color: #333;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
         }
 
         @keyframes fall {
             to {
                 transform: translateY(100vh);
             }
+        }
+
+        @keyframes floatMessage {
+            0% {
+                opacity: 0;
+                transform: translateY(100vh) scale(0.5);
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(80vh) scale(1);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(20vh) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(0) scale(0.5);
+            }
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 80px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 1.2rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        body.light-theme .theme-toggle {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
         }
 
         header {
@@ -73,9 +174,17 @@
             color: white;
         }
 
+        body.light-theme .logo {
+            color: #333;
+        }
+
         .logo i {
             font-size: 1.8rem;
             color: #a78bfa;
+        }
+
+        body.light-theme .logo i {
+            color: #4a76a8;
         }
 
         .user-menu {
@@ -97,9 +206,18 @@
             font-size: 0.9rem;
         }
 
+        body.light-theme .user-icon {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+
         .user-icon:hover {
             transform: scale(1.1);
             background: rgba(255, 255, 255, 0.25);
+        }
+
+        body.light-theme .user-icon:hover {
+            background: rgba(0, 0, 0, 0.2);
         }
 
         .dropdown-menu {
@@ -118,6 +236,12 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 100;
+        }
+
+        body.light-theme .dropdown-menu {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: var(--shadow-light);
+            border: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .user-menu:hover .dropdown-menu {
@@ -141,8 +265,16 @@
             gap: 10px;
         }
 
+        body.light-theme .dropdown-menu button {
+            color: var(--text-primary-light);
+        }
+
         .dropdown-menu button:hover {
             background: rgba(255, 255, 255, 0.1);
+        }
+
+        body.light-theme .dropdown-menu button:hover {
+            background: rgba(0, 0, 0, 0.05);
         }
 
         .dropdown-menu i {
@@ -166,6 +298,12 @@
             min-height: 70vh;
         }
 
+        body.light-theme .chat-container {
+            background: var(--chat-bg-light);
+            box-shadow: var(--shadow-light);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
         .chat-header {
             padding: 1.5rem;
             text-align: center;
@@ -173,14 +311,27 @@
             background: rgba(40, 40, 70, 0.8);
         }
 
+        body.light-theme .chat-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
         .chat-header h2 {
             color: var(--text-primary);
             margin-bottom: 0.5rem;
         }
 
+        body.light-theme .chat-header h2 {
+            color: var(--text-primary-light);
+        }
+
         .chat-header p {
             color: var(--text-secondary);
             font-size: 0.9rem;
+        }
+
+        body.light-theme .chat-header p {
+            color: var(--text-secondary-light);
         }
 
         .chat-messages {
@@ -222,11 +373,21 @@
             animation-name: slideInFromRight;
         }
 
+        body.light-theme .user-message .message-bubble {
+            background: var(--user-msg-light);
+            color: white;
+        }
+
         .bot-message .message-bubble {
             background: var(--bot-msg);
             color: var(--text-primary);
             border-bottom-left-radius: 5px;
             animation-name: slideInFromLeft;
+        }
+
+        body.light-theme .bot-message .message-bubble {
+            background: var(--bot-msg-light);
+            color: var(--text-primary-light);
         }
 
         .message-time {
@@ -258,6 +419,10 @@
             color: var(--accent);
         }
 
+        body.light-theme .tts-btn:hover {
+            color: var(--accent-light);
+        }
+
         .skeleton {
             display: flex;
             gap: 10px;
@@ -272,6 +437,10 @@
             animation: loading 1.5s infinite;
         }
 
+        body.light-theme .skeleton-avatar {
+            background: linear-gradient(90deg, #e6f2ff 25%, #d9e9ff 50%, #e6f2ff 75%);
+        }
+
         .skeleton-content {
             flex: 1;
         }
@@ -283,6 +452,10 @@
             background: linear-gradient(90deg, #2d2d5a 25%, #3a3a6a 50%, #2d2d5a 75%);
             background-size: 200% 100%;
             animation: loading 1.5s infinite;
+        }
+
+        body.light-theme .skeleton-line {
+            background: linear-gradient(90deg, #e6f2ff 25%, #d9e9ff 50%, #e6f2ff 75%);
         }
 
         .skeleton-line.short {
@@ -303,6 +476,11 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             z-index: 10;
+        }
+
+        body.light-theme .input-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .input-wrapper {
@@ -328,6 +506,12 @@
             color: var(--text-primary);
         }
 
+        body.light-theme .text-input {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            color: var(--text-primary-light);
+        }
+
         .text-input:focus {
             outline: none;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
@@ -335,8 +519,17 @@
             background: rgba(50, 50, 90, 0.9);
         }
 
+        body.light-theme .text-input:focus {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 1);
+        }
+
         .text-input::placeholder {
             color: var(--text-secondary);
+        }
+
+        body.light-theme .text-input::placeholder {
+            color: var(--text-secondary-light);
         }
 
         .text-input:disabled {
@@ -367,8 +560,16 @@
             background: var(--accent);
         }
 
+        body.light-theme .btn-send {
+            background: var(--accent-light);
+        }
+
         .btn-voice {
             background: var(--user-msg);
+        }
+
+        body.light-theme .btn-voice {
+            background: var(--user-msg-light);
         }
 
         .btn:hover {
@@ -403,6 +604,10 @@
             backdrop-filter: blur(5px);
         }
 
+        body.light-theme .modal {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
         .modal.active {
             display: flex;
         }
@@ -417,6 +622,12 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        body.light-theme .modal-content {
+            background: var(--chat-bg-light);
+            box-shadow: var(--shadow-light);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -427,6 +638,10 @@
         .modal-title {
             font-size: 1.5rem;
             color: var(--text-primary);
+        }
+
+        body.light-theme .modal-title {
+            color: var(--text-primary-light);
         }
 
         .close-modal {
@@ -442,6 +657,10 @@
             color: var(--accent);
         }
 
+        body.light-theme .close-modal:hover {
+            color: var(--accent-light);
+        }
+
         .form-group {
             margin-bottom: 1.2rem;
         }
@@ -450,6 +669,10 @@
             display: block;
             margin-bottom: 0.5rem;
             color: var(--text-secondary);
+        }
+
+        body.light-theme .form-label {
+            color: var(--text-secondary-light);
         }
 
         .form-input {
@@ -463,10 +686,21 @@
             transition: all 0.3s;
         }
 
+        body.light-theme .form-input {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text-primary-light);
+        }
+
         .form-input:focus {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
+        }
+
+        body.light-theme .form-input:focus {
+            border-color: var(--accent-light);
+            box-shadow: 0 0 0 2px rgba(255, 82, 82, 0.2);
         }
 
         .form-button {
@@ -482,6 +716,10 @@
             margin-top: 0.5rem;
         }
 
+        body.light-theme .form-button {
+            background: var(--accent-light);
+        }
+
         .form-button:hover {
             background: var(--accent-hover);
         }
@@ -493,10 +731,18 @@
             font-size: 0.9rem;
         }
 
+        body.light-theme .form-footer {
+            color: var(--text-secondary-light);
+        }
+
         .form-link {
             color: var(--accent);
             cursor: pointer;
             text-decoration: underline;
+        }
+
+        body.light-theme .form-link {
+            color: var(--accent-light);
         }
 
         .plans-container {
@@ -515,14 +761,28 @@
             cursor: pointer;
         }
 
+        body.light-theme .plan-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
         .plan-card:hover {
             transform: translateY(-5px);
             border-color: var(--accent);
         }
 
+        body.light-theme .plan-card:hover {
+            border-color: var(--accent-light);
+        }
+
         .plan-card.selected {
             border-color: var(--accent);
             background: rgba(255, 107, 107, 0.1);
+        }
+
+        body.light-theme .plan-card.selected {
+            border-color: var(--accent-light);
+            background: rgba(255, 82, 82, 0.1);
         }
 
         .plan-name {
@@ -531,11 +791,19 @@
             color: var(--text-primary);
         }
 
+        body.light-theme .plan-name {
+            color: var(--text-primary-light);
+        }
+
         .plan-price {
             font-size: 1.5rem;
             font-weight: bold;
             margin-bottom: 1rem;
             color: var(--accent);
+        }
+
+        body.light-theme .plan-price {
+            color: var(--accent-light);
         }
 
         .plan-features {
@@ -551,8 +819,16 @@
             color: var(--text-secondary);
         }
 
+        body.light-theme .plan-features li {
+            color: var(--text-secondary-light);
+        }
+
         .plan-features i {
             color: var(--accent);
+        }
+
+        body.light-theme .plan-features i {
+            color: var(--accent-light);
         }
 
         .notification {
@@ -568,6 +844,12 @@
             transition: transform 0.3s ease;
             z-index: 1001;
             max-width: 300px;
+        }
+
+        body.light-theme .notification {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: var(--shadow-light);
+            border-left: 4px solid var(--accent-light);
         }
 
         .notification.show {
@@ -654,6 +936,11 @@
                 width: 95%;
                 padding: 1.5rem;
             }
+            
+            .theme-toggle {
+                top: 15px;
+                right: 70px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -686,7 +973,12 @@
     </style>
 </head>
 <body>
+    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+    
     <div class="stars" id="stars"></div>
+    <div class="clouds" id="clouds"></div>
     <div class="notification" id="notification"></div>
 
     <header>
@@ -823,85 +1115,321 @@
     </div>
 
     <script>
-        // API клиент для общения с сервером
+        // API клиент для общения с OpenRouter API
         class ApiClient {
             constructor() {
-                this.baseUrl = '';
+                this.openRouterApiKey = "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";
+                this.openRouterApiUrl = "https://openrouter.ai/api/v1/chat/completions";
             }
 
-            async registerUser(phone, name, birth_date, password) {
-                const response = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, name, birth_date, password })
-                });
-                return await response.json();
-            }
-
-            async loginUser(phone, password) {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, password })
-                });
-                return await response.json();
-            }
-
-            async sendMessage(user_data, message) {
-                const response = await fetch('/api/send-message', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_data, message })
-                });
-                return await response.json();
-            }
-
-            async getChatHistory(user_data) {
-                const response = await fetch('/api/chat-history', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_data })
-                });
-                return await response.json();
-            }
-
-            async textToSpeech(text) {
+            async getAIResponse(userMessage, userData, chatHistory) {
                 try {
-                    const response = await fetch('/api/text-to-speech', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text })
+                    // Создаем системный промпт с данными пользователя
+                    const systemPrompt = this.createSystemPrompt(userData);
+                    
+                    // Формируем сообщения для AI
+                    const messages = [{ role: "system", content: systemPrompt }];
+                    
+                    // Добавляем историю сообщений
+                    for (const msg of chatHistory) {
+                        messages.push({
+                            role: msg.role === 'user' ? 'user' : 'assistant',
+                            content: msg.content
+                        });
+                    }
+                    
+                    // Добавляем текущее сообщение пользователя
+                    messages.push({ role: "user", content: userMessage });
+                    
+                    console.log(`Sending request to AI with ${messages.length} messages`);
+                    
+                    // Отправляем запрос к OpenRouter API
+                    const response = await fetch(this.openRouterApiUrl, {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${this.openRouterApiKey}`,
+                            "Content-Type": "application/json",
+                            "HTTP-Referer": "https://dream-interpreter.com",
+                            "X-Title": "ИИ Сонник"
+                        },
+                        body: JSON.stringify({
+                            model: "deepseek/deepseek-chat-v3-0324",
+                            messages: messages,
+                            max_tokens: 1000,
+                            temperature: 0.7
+                        })
                     });
                     
                     if (response.ok) {
-                        const audioBlob = await response.blob();
-                        const audioUrl = URL.createObjectURL(audioBlob);
-                        return { success: true, audioUrl };
+                        const data = await response.json();
+                        const aiResponse = data.choices[0].message.content;
+                        console.log("AI response received successfully");
+                        return aiResponse;
                     } else {
-                        const error = await response.json();
-                        return error;
+                        console.error(`OpenRouter API error: ${response.status} - ${await response.text()}`);
+                        return "Извините, произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.";
                     }
                 } catch (error) {
-                    console.error('TTS request error:', error);
-                    return { 
-                        success: false, 
-                        message: 'Ошибка соединения с сервером озвучки' 
+                    console.error('AI API error:', error);
+                    return "Извините, сервис временно недоступен. Пожалуйста, попробуйте позже.";
+                }
+            }
+
+            createSystemPrompt(userData) {
+                const age = this.calculateAge(userData.birth_date);
+                const name = userData.name;
+                
+                return `Ты - опытный психолог-толкователь снов с 20-летним стажем. Твоя задача - анализировать сны и давать глубокую психологическую интерпретацию.
+
+ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ:
+- Имя: ${name}
+- Возраст: ${age} лет
+
+ТВОИ ОСОБЕННОСТИ:
+1. Анализируй сны с точки зрения психологии (Фрейд, Юнг, современные подходы)
+2. Учитывай контекст предыдущих бесед и снов пользователя
+3. Давай развернутые, но понятные объяснения
+4. Будь эмпатичным и поддерживающим
+5. Предлагай практические рекомендации
+6. Связывай символы сна с реальной жизнью пользователя
+7. Учитывай возрастные особенности
+
+ВАЖНЫЕ ПРИНЦИПЫ:
+- Сны - это способ подсознания общаться с сознанием
+- Каждый символ имеет значение
+- Контекст предыдущих снов важен для точной интерпретации
+- Давай не только анализ, но и рекомендации
+
+ФОРМАТ ОТВЕТА:
+1. Анализ основных символов
+2. Психологическая интерпретация
+3. Связь с реальной жизнью
+4. Практические рекомендации
+
+Помни: ты помогаешь ${name} лучше понять себя через анализ снов.`;
+            }
+
+            calculateAge(birthDateStr) {
+                try {
+                    const birthDate = new Date(birthDateStr);
+                    const today = new Date();
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    
+                    const monthDiff = today.getMonth() - birthDate.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                    }
+                    
+                    return age;
+                } catch {
+                    return "неизвестно";
+                }
+            }
+        }
+
+        // Менеджер базы данных на localStorage
+        class Database {
+            constructor() {
+                this.initDatabase();
+            }
+
+            initDatabase() {
+                if (!localStorage.getItem('users')) {
+                    localStorage.setItem('users', JSON.stringify([]));
+                }
+                if (!localStorage.getItem('chats')) {
+                    localStorage.setItem('chats', JSON.stringify([]));
+                }
+                if (!localStorage.getItem('messages')) {
+                    localStorage.setItem('messages', JSON.stringify([]));
+                }
+            }
+
+            createUser(phone, name, birth_date, password) {
+                const users = JSON.parse(localStorage.getItem('users'));
+                
+                if (users.find(u => u.phone === phone)) {
+                    throw new Error("Пользователь с таким номером телефона уже существует");
+                }
+                
+                const user = {
+                    id: Date.now(),
+                    phone,
+                    name,
+                    birth_date,
+                    password,
+                    created_at: new Date().toISOString()
+                };
+                
+                users.push(user);
+                localStorage.setItem('users', JSON.stringify(users));
+                return user.id;
+            }
+
+            getUserByPhone(phone) {
+                const users = JSON.parse(localStorage.getItem('users'));
+                return users.find(u => u.phone === phone) || null;
+            }
+
+            getOrCreateChat(user_id, chat_type = 'web') {
+                const chats = JSON.parse(localStorage.getItem('chats'));
+                
+                let chat = chats.find(c => c.user_id === user_id && c.chat_type === chat_type);
+                
+                if (!chat) {
+                    chat = {
+                        id: Date.now(),
+                        user_id,
+                        chat_type,
+                        created_at: new Date().toISOString()
+                    };
+                    
+                    chats.push(chat);
+                    localStorage.setItem('chats', JSON.stringify(chats));
+                }
+                
+                return chat.id;
+            }
+
+            saveMessage(chat_id, role, content) {
+                const messages = JSON.parse(localStorage.getItem('messages'));
+                
+                const message = {
+                    id: Date.now(),
+                    chat_id,
+                    role,
+                    content,
+                    timestamp: new Date().toISOString()
+                };
+                
+                messages.push(message);
+                localStorage.setItem('messages', JSON.stringify(messages));
+            }
+
+            getChatHistory(chat_id, limit = 10) {
+                const messages = JSON.parse(localStorage.getItem('messages'));
+                
+                return messages
+                    .filter(m => m.chat_id === chat_id)
+                    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                    .slice(-limit)
+                    .map(m => ({
+                        role: m.role,
+                        content: m.content,
+                        timestamp: m.timestamp
+                    }));
+            }
+        }
+
+        // Бэкенд API
+        class BackendAPI {
+            constructor() {
+                this.db = new Database();
+                this.aiService = new ApiClient();
+            }
+
+            registerUser(phone, name, birth_date, password) {
+                try {
+                    const user_id = this.db.createUser(phone, name, birth_date, password);
+                    return {
+                        success: true,
+                        message: 'Регистрация прошла успешно!',
+                        user_id: user_id
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: error.message
                     };
                 }
             }
 
-            async createPayment(plan) {
-                const response = await fetch('/api/create-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plan })
-                });
-                return await response.json();
+            loginUser(phone, password) {
+                try {
+                    const user = this.db.getUserByPhone(phone);
+                    
+                    if (user && user.password === password) {
+                        return {
+                            success: true,
+                            message: 'Вход выполнен успешно!',
+                            user: {
+                                id: user.id,
+                                name: user.name,
+                                phone: user.phone,
+                                birth_date: user.birth_date
+                            }
+                        };
+                    } else {
+                        return {
+                            success: false,
+                            message: 'Неверный номер телефона или пароль'
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: 'Внутренняя ошибка сервера'
+                    };
+                }
+            }
+
+            async sendMessage(user_data, message) {
+                try {
+                    const user = this.db.getUserByPhone(user_data.phone);
+                    if (!user) {
+                        return { success: false, error: 'Пользователь не найден' };
+                    }
+                    
+                    // Получаем или создаем чат
+                    const chat_id = this.db.getOrCreateChat(user.id, 'web');
+                    
+                    // Сохраняем сообщение пользователя
+                    this.db.saveMessage(chat_id, 'user', message);
+                    
+                    // Получаем историю чата (последние 6 сообщений для контекста)
+                    const chat_history = this.db.getChatHistory(chat_id, limit = 6);
+                    
+                    console.log(`Chat history for user ${user.name}: ${chat_history.length} messages`);
+                    
+                    // Получаем ответ от AI
+                    const ai_response = await this.aiService.getAIResponse(message, user, chat_history);
+                    
+                    // Сохраняем ответ AI
+                    this.db.saveMessage(chat_id, 'assistant', ai_response);
+                    
+                    return {
+                        success: true,
+                        response: ai_response
+                    };
+                } catch (error) {
+                    console.error('Send message error:', error);
+                    return {
+                        success: false,
+                        message: 'Извините, произошла ошибка. Пожалуйста, попробуйте еще раз.'
+                    };
+                }
+            }
+
+            getChatHistory(user_data) {
+                try {
+                    const user = this.db.getUserByPhone(user_data.phone);
+                    if (!user) {
+                        return { success: false, error: 'Пользователь не найден' };
+                    }
+                    
+                    const chat_id = this.db.getOrCreateChat(user.id, 'web');
+                    const history = this.db.getChatHistory(chat_id, limit = 20);
+                    
+                    return { success: true, history: history };
+                } catch (error) {
+                    console.error('Get chat history error:', error);
+                    return { success: false, history: [] };
+                }
             }
         }
 
         // Инициализация API клиента
-        const apiClient = new ApiClient();
+        const backendAPI = new BackendAPI();
 
         // Остальной JavaScript код
         let currentUser = null;
@@ -928,6 +1456,82 @@
                 star.style.animationDelay = `${Math.random() * 5}s`;
                 
                 starsContainer.appendChild(star);
+            }
+        }
+
+        function createClouds() {
+            const cloudsContainer = document.getElementById('clouds');
+            const cloudsCount = 15;
+            
+            for (let i = 0; i < cloudsCount; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                
+                const width = Math.random() * 120 + 80;
+                const height = width * 0.5;
+                cloud.style.width = `${width}px`;
+                cloud.style.height = `${height}px`;
+                
+                cloud.style.left = `${Math.random() * 100}vw`;
+                cloud.style.top = `${Math.random() * 100}vh`;
+                
+                const duration = Math.random() * 40 + 20;
+                cloud.style.animationDuration = `${duration}s`;
+                cloud.style.animationDelay = `${Math.random() * 10}s`;
+                
+                cloudsContainer.appendChild(cloud);
+            }
+        }
+
+        function createFloatingMessage() {
+            const messages = [
+                "Лучший проект",
+                "Покупай подписку",
+                "Проект заслуживающий первое место"
+            ];
+            
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            const floatingMessage = document.createElement('div');
+            floatingMessage.className = 'floating-message';
+            floatingMessage.textContent = message;
+            
+            floatingMessage.style.left = `${Math.random() * 80 + 10}vw`;
+            floatingMessage.style.fontSize = `${Math.random() * 10 + 14}px`;
+            
+            document.body.appendChild(floatingMessage);
+            
+            setTimeout(() => {
+                floatingMessage.remove();
+            }, 15000);
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.getElementById('themeToggle');
+            const icon = themeToggle.querySelector('i');
+            
+            if (body.classList.contains('light-theme')) {
+                body.classList.remove('light-theme');
+                icon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.add('light-theme');
+                icon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const themeToggle = document.getElementById('themeToggle');
+            const icon = themeToggle.querySelector('i');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                icon.className = 'fas fa-sun';
+            } else {
+                document.body.classList.remove('light-theme');
+                icon.className = 'fas fa-moon';
             }
         }
 
@@ -1000,7 +1604,7 @@
             if (!currentUser) return;
             
             try {
-                const result = await apiClient.getChatHistory(currentUser);
+                const result = await backendAPI.getChatHistory(currentUser);
                 
                 if (result.success && result.history) {
                     const chatMessages = document.getElementById('chatMessages');
@@ -1065,7 +1669,7 @@
             showLoadingIndicator();
             
             try {
-                const result = await apiClient.sendMessage(currentUser, message);
+                const result = await backendAPI.sendMessage(currentUser, message);
                 
                 if (result.success) {
                     removeLoadingIndicator();
@@ -1079,33 +1683,13 @@
             }
         }
 
-        // Функция для использования серверного TTS
-        async function useServerTTS(text) {
-            try {
-                const result = await apiClient.textToSpeech(text);
-                
-                if (result.success && result.audioUrl) {
-                    const audio = new Audio(result.audioUrl);
-                    audio.play().catch(e => {
-                        console.error('Audio play error:', e);
-                        showNotification('Ошибка воспроизведения аудио', 'error');
-                    });
-                } else {
-                    showNotification(result.message || 'Озвучка временно недоступна', 'error');
-                }
-            } catch (error) {
-                console.error('Server TTS error:', error);
-                showNotification('Озвучка временно недоступна', 'error');
-            }
-        }
-
         async function textToSpeech(text) {
             try {
-                // Сначала пробуем использовать браузерный Web Speech API
+                // Используем браузерный Web Speech API
                 if ('speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.lang = 'ru-RU';
-                    utterance.rate = 0.8; // Немного медленнее для лучшего понимания
+                    utterance.rate = 0.8;
                     utterance.pitch = 1.0;
                     utterance.volume = 1.0;
 
@@ -1125,20 +1709,15 @@
 
                     utterance.onerror = function(event) {
                         console.error('Speech synthesis error:', event);
-                        // Если Web Speech API не работает, пробуем серверный TTS
-                        useServerTTS(text);
                     };
 
                     speechSynthesis.speak(utterance);
-                    return;
                 } else {
-                    // Если Web Speech API не поддерживается, используем серверный TTS
-                    useServerTTS(text);
+                    showNotification('Браузер не поддерживает озвучку', 'error');
                 }
             } catch (error) {
                 console.error('TTS error:', error);
-                // Fallback на серверный TTS
-                useServerTTS(text);
+                showNotification('Ошибка озвучки', 'error');
             }
         }
 
@@ -1173,7 +1752,7 @@
                     document.getElementById('messageInput').placeholder = "Опишите свой сон...";
                 };
             } else {
-                showNotification('Браузер не поддерживает распознавание речи', 'error');
+                document.getElementById('voiceBtn').style.display = 'none';
             }
         }
 
@@ -1231,14 +1810,18 @@
 
         async function createPayment(plan) {
             try {
-                const result = await apiClient.createPayment(plan);
+                // В реальном приложении здесь будет интеграция с платежной системой
+                const plans = {
+                    'basic': { price: '299', name: 'Базовый' },
+                    'premium': { price: '799', name: 'Премиум' }
+                };
                 
-                if (result.success) {
-                    showNotification(`Платеж для тарифа "${result.payment_data.name}" создан!`, 'success');
-                    // В реальном приложении здесь будет перенаправление на страницу оплаты
-                } else {
-                    showNotification('Ошибка создания платежа', 'error');
-                }
+                const planData = plans[plan] || plans['basic'];
+                
+                showNotification(`Платеж для тарифа "${planData.name}" создан! Сумма: ${planData.price} ₽`, 'success');
+                
+                // Закрываем модальное окно
+                closeModal(document.getElementById('paymentModal'));
             } catch (error) {
                 showNotification('Ошибка создания платежа', 'error');
             }
@@ -1246,9 +1829,19 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             createStars();
+            createClouds();
+            initTheme();
             initSpeechRecognition();
             updateUIForGuest();
             
+            // Случайные сообщения каждые 30 секунд с 10% шансом
+            setInterval(() => {
+                if (Math.random() < 0.1) {
+                    createFloatingMessage();
+                }
+            }, 30000);
+            
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
             document.getElementById('registerBtn').addEventListener('click', () => openModal(document.getElementById('registerModal')));
             document.getElementById('loginBtn').addEventListener('click', () => openModal(document.getElementById('loginModal')));
             document.getElementById('paymentBtn').addEventListener('click', () => openModal(document.getElementById('paymentModal')));
@@ -1290,7 +1883,7 @@
                 }
                 
                 try {
-                    const result = await apiClient.registerUser(
+                    const result = backendAPI.registerUser(
                         formData.phone,
                         formData.name,
                         formData.birth_date,
@@ -1303,7 +1896,7 @@
                         document.getElementById('registerForm').reset();
                         
                         // Автоматический вход после регистрации
-                        const loginResult = await apiClient.loginUser(formData.phone, formData.password);
+                        const loginResult = backendAPI.loginUser(formData.phone, formData.password);
                         if (loginResult.success) {
                             updateUIForLoggedInUser(loginResult.user);
                         }
@@ -1324,7 +1917,7 @@
                 };
                 
                 try {
-                    const result = await apiClient.loginUser(formData.phone, formData.password);
+                    const result = backendAPI.loginUser(formData.phone, formData.password);
                     
                     if (result.success) {
                         closeModal(document.getElementById('loginModal'));
