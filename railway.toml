@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "node api.js & python telegram_bot.py && fg"
+startCommand = "node api.js & python telegram_bot.py & python telegram_bot.py && fg"
 
 [env]
 PORT = "8080"
