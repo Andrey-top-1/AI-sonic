@@ -16,7 +16,7 @@ if hasattr(sys.stderr, 'reconfigure'):
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stderr)]
+    handlers=[logging.StreamHandler(sys.stdout)]
 )
 logger = logging.getLogger(__name__)
 
@@ -465,6 +465,14 @@ def main():
             }
             error_json = json.dumps(error_result, ensure_ascii=False, separators=(',', ':'))
             print(error_json)
+    else:
+        # Если нет аргументов, просто выводим сообщение
+        logger.info("Web app backend ready!")
+        result = {
+            'success': True,
+            'message': 'Web app backend is running'
+        }
+        print(json.dumps(result))
 
 if __name__ == '__main__':
     main()
