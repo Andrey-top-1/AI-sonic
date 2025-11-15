@@ -4,7 +4,8 @@
   "description": "AI Dream Interpreter Web Application",
   "main": "api.js",
   "scripts": {
-    "start": "node api.js"
+    "start": "node api.js",
+    "dev": "node api.js"
   },
   "dependencies": {
     "express": "^4.18.2",
