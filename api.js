@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -10,6 +11,10 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
+
+// OpenRouter API конфигурация
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "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";
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -32,17 +37,115 @@ function generateId() {
   return Date.now() + Math.random().toString(36).substr(2, 9);
 }
 
-// AI ответы
-const aiResponses = [
-  "Интересный сон! На основе психологического анализа, такой сон часто связан с эмоциональным состоянием. Возможно, вы переживаете о чем-то или испытываете внутреннее напряжение.",
-  "Толкование вашего сна указывает на внутренние переживания или нерешенные вопросы. Это может быть отражением вашего подсознания, которое пытается обработать дневные впечатления.",
-  "Согласно сонникам, подобные сны часто связаны с поиском себя или своего места в жизни. Возможно, вам стоит обратить внимание на текущие цели и приоритеты.",
-  "Этот сон может быть отражением вашего творческого потенциала или нереализованных идей. Возможно, пришло время выразить себя в каком-то новом качестве.",
-  "Интерпретация такого сна обычно связана с переменами, которые происходят или скоро произойдут в вашей жизни. Будьте открыты новым возможностям.",
-  "Ваш сон может символизировать скрытые страхи или желания. Попробуйте проанализировать, что вызывает у вас подобные эмоции в реальной жизни.",
-  "С психологической точки зрения, такой сон часто связан с потребностью в безопасности и стабильности. Обратите внимание на области жизни, где вы чувствуете неуверенность.",
-  "Этот сон может указывать на необходимость отдыха и восстановления сил. Ваше подсознание сигнализирует о переутомлении."
-];
+// Функция для расчета возраста
+function calculateAge(birthDate) {
+  const birth = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
+}
+
+// Функция для создания системного промпта
+function createSystemPrompt(user) {
+  const age = calculateAge(user.birth_date);
+  
+  return `Ты - опытный психолог-толкователь снов. Твоя задача - анализировать сны и давать психологическую интерпретацию.
+
+Информация о пользователе:
+- Имя: ${user.name}
+- Возраст: ${age} лет
+
+Твои особенности:
+1. Давай развернутые, но понятные объяснения (3-5 предложений)
+2. Будь внимательным к деталям снов
+3. Делай акцент на психологической интерпретации
+4. Будь эмпатичным и поддерживающим
+5. Учитывай контекст предыдущих бесед
+6. Используй профессиональную, но доступную лексику
+7. Связывай интерпретацию с возможными жизненными ситуациями пользователя
+
+Помни: сны - это способ подсознания общаться с нами. Твоя цель - помочь пользователю лучше понять себя через анализ сновидений.`;
+}
+
+// Функция для получения ответа от AI
+async function getAIResponse(userMessage, user, chatHistory) {
+  try {
+    const systemPrompt = createSystemPrompt(user);
+    
+    // Формируем массив сообщений для AI
+    const messages = [
+      { role: "system", content: systemPrompt }
+    ];
+
+    // Добавляем историю чата (последние 6 сообщений для контекста)
+    const recentHistory = chatHistory.slice(-6);
+    recentHistory.forEach(msg => {
+      messages.push({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      });
+    });
+
+    // Добавляем текущее сообщение пользователя
+    messages.push({ role: "user", content: userMessage });
+
+    console.log('Sending to AI:', {
+      model: "deepseek/deepseek-chat-v3-0324",
+      messageCount: messages.length,
+      hasHistory: recentHistory.length > 0
+    });
+
+    const response = await fetch(OPENROUTER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://dream-interpreter.com',
+        'X-Title': 'ИИ Сонник'
+      },
+      body: JSON.stringify({
+        model: "deepseek/deepseek-chat-v3-0324",
+        messages: messages,
+        max_tokens: 1000,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenRouter API error:', response.status, errorText);
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      return data.choices[0].message.content;
+    } else {
+      console.error('Unexpected API response:', data);
+      throw new Error('Invalid API response format');
+    }
+  } catch (error) {
+    console.error('AI API error:', error);
+    
+    // Fallback ответы
+    const fallbackResponses = [
+      "На основе анализа вашего сна, могу предположить, что он отражает ваше текущее эмоциональное состояние. Часто такие сны связаны с нерешёнными вопросами или внутренними переживаниями.",
+      "Интерпретация вашего сна указывает на возможные скрытые тревоги или невыраженные эмоции. Ваше подсознание пытается обработать дневные впечатления.",
+      "С психологической точки зрения, такой сон может быть связан с поиском баланса в жизни. Обратите внимание на области, где вы чувствуете напряжение.",
+      "Ваш сон может символизировать переходный период в жизни. Подсознание часто использует образы снов для обработки значимых изменений.",
+      "Анализ вашего сна suggests возможную потребность в самовыражении или творческой реализации. Рассмотрите новые способы проявления своих талантов."
+    ];
+    
+    return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)] + " (Ответ сгенерирован локально)";
+  }
+}
 
 // API Routes
 app.post('/api/register', async (req, res) => {
@@ -180,28 +283,29 @@ app.post('/api/send-message', async (req, res) => {
     };
     memoryDB.messages.push(userMessage);
 
-    // Генерируем ответ AI
-    const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
-    
-    // Добавляем персонализацию
-    let response = randomResponse;
-    if (user.name) {
-      response = response.replace('ваш', `ваш, ${user.name}`);
-    }
+    // Получаем историю чата для контекста
+    const chatHistory = memoryDB.messages
+      .filter(m => m.chat_id === chat.id)
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    console.log('Chat history length:', chatHistory.length);
+
+    // Получаем ответ от AI
+    const aiResponse = await getAIResponse(message, user, chatHistory);
 
     // Сохраняем ответ AI
     const aiMessage = {
       id: generateId(),
       chat_id: chat.id,
       role: 'assistant',
-      content: response,
+      content: aiResponse,
       timestamp: new Date().toISOString()
     };
     memoryDB.messages.push(aiMessage);
 
     res.json({
       success: true,
-      response: response
+      response: aiResponse
     });
   } catch (error) {
     console.error('Send message error:', error);
@@ -244,8 +348,7 @@ app.post('/api/chat-history', async (req, res) => {
     // Получаем историю сообщений
     const history = memoryDB.messages
       .filter(m => m.chat_id === chat.id)
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-      .slice(-10);
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     res.json({
       success: true,
@@ -324,6 +427,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Dream Interpreter server running on port ${PORT}`);
   console.log(`📍 Health check: http://0.0.0.0:${PORT}/health`);
   console.log(`💾 Using in-memory database`);
+  console.log(`🤖 AI API: ${OPENROUTER_API_KEY ? 'Configured' : 'Not configured'}`);
 });
 
 // Handle uncaught exceptions
