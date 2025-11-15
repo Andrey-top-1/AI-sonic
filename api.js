@@ -27,30 +27,13 @@ function callPythonScript(scriptName, args = {}) {
   return new Promise((resolve, reject) => {
     console.log(`Calling Python script: ${scriptName} with args:`, JSON.stringify(args).substring(0, 200) + '...');
     
-    const pythonCommands = ['python3', 'python'];
-    let pythonProcess = null;
-    let lastError = null;
-
-    for (const cmd of pythonCommands) {
-      try {
-        pythonProcess = spawn(cmd, [
-          path.join(__dirname, scriptName),
-          JSON.stringify(args)
-        ], {
-          stdio: ['pipe', 'pipe', 'pipe']
-        });
-        console.log(`Using Python command: ${cmd}`);
-        break;
-      } catch (error) {
-        lastError = error;
-        console.log(`Python command ${cmd} failed, trying next...`);
-      }
-    }
-
-    if (!pythonProcess) {
-      reject(new Error(`No Python interpreter found. Tried: ${pythonCommands.join(', ')}`));
-      return;
-    }
+    const pythonProcess = spawn('python3', [
+      path.join(__dirname, scriptName),
+      JSON.stringify(args)
+    ], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      encoding: 'utf-8'
+    });
 
     let result = '';
     let errorOutput = '';
@@ -114,7 +97,7 @@ app.post('/api/register', async (req, res) => {
       });
     }
 
-    const result = await callPythonScript('app.py', {
+    const result = await callPythonScript('web_app.py', {
       action: 'register',
       phone, name, birth_date, password
     });
@@ -140,7 +123,7 @@ app.post('/api/login', async (req, res) => {
       });
     }
 
-    const result = await callPythonScript('app.py', {
+    const result = await callPythonScript('web_app.py', {
       action: 'login',
       phone, password
     });
@@ -168,7 +151,7 @@ app.post('/api/send-message', async (req, res) => {
 
     console.log(`Sending message from user ${user_data.name}: ${message.substring(0, 100)}...`);
     
-    const result = await callPythonScript('app.py', {
+    const result = await callPythonScript('web_app.py', {
       action: 'send_message',
       user_data, 
       message
@@ -195,7 +178,7 @@ app.post('/api/chat-history', async (req, res) => {
       });
     }
 
-    const result = await callPythonScript('app.py', {
+    const result = await callPythonScript('web_app.py', {
       action: 'get_chat_history',
       user_data
     });
@@ -206,31 +189,6 @@ app.post('/api/chat-history', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Ошибка загрузки истории' 
-    });
-  }
-});
-
-app.post('/api/text-to-speech', async (req, res) => {
-  try {
-    const { text } = req.body;
-    
-    if (!text) {
-      return res.status(400).json({
-        success: false,
-        message: 'Текст обязателен'
-      });
-    }
-
-    // Используем Web Speech API на клиенте
-    res.status(500).json({
-      success: false,
-      message: 'Используйте встроенную озвучку браузера'
-    });
-  } catch (error) {
-    console.error('TTS error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Ошибка озвучки' 
     });
   }
 });
@@ -275,9 +233,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📍 Health check: http://0.0.0.0:${PORT}/health`);
   console.log(`🐍 Python integration: Active`);
   console.log(`💾 SQLite database: dream_interpreter.db`);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
 });
