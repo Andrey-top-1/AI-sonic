@@ -1191,66 +1191,52 @@
 
         // TTS сервис с использованием Web Speech API и резервного варианта через Google TTS
         class TTSService {
-            constructor() {
-                this.speechSynthesis = window.speechSynthesis;
+    constructor() {
+        this.speechSynthesis = window.speechSynthesis;
+        this.isPlaying = false;
+        this.currentUtterance = null;
+    }
+
+    async speak(text) {
+        this.stop();
+        
+        return new Promise((resolve) => {
+            if (!this.speechSynthesis) {
+                console.log('Озвучка не поддерживается');
+                resolve();
+                return;
+            }
+
+            this.currentUtterance = new SpeechSynthesisUtterance(text);
+            this.currentUtterance.lang = 'ru-RU';
+            this.currentUtterance.rate = 0.9;
+            this.currentUtterance.pitch = 1.0;
+
+            this.currentUtterance.onend = () => {
                 this.isPlaying = false;
                 this.currentUtterance = null;
-            }
+                resolve();
+            };
 
-            // Основной метод озвучки через Web Speech API
-            async speak(text) {
-                // Останавливаем текущее воспроизведение
-                this.stop();
-                
-                return new Promise((resolve) => {
-                    if (!this.speechSynthesis) {
-                        console.error('Speech Synthesis not supported');
-                        this.useFallbackTTS(text);
-                        resolve();
-                        return;
-                    }
+            this.currentUtterance.onerror = () => {
+                this.isPlaying = false;
+                this.currentUtterance = null;
+                resolve();
+            };
 
-                    // Создаем utterance
-                    this.currentUtterance = new SpeechSynthesisUtterance(text);
-                    this.currentUtterance.lang = 'ru-RU';
-                    this.currentUtterance.rate = 0.9;
-                    this.currentUtterance.pitch = 1.0;
-                    this.currentUtterance.volume = 1.0;
+            this.speechSynthesis.speak(this.currentUtterance);
+            this.isPlaying = true;
+        });
+    }
 
-                    // Пытаемся найти русский голос
-                    const voices = this.speechSynthesis.getVoices();
-                    const russianVoice = voices.find(voice => 
-                        voice.lang.includes('ru') || voice.lang.includes('RU')
-                    );
-                    
-                    if (russianVoice) {
-                        this.currentUtterance.voice = russianVoice;
-                    }
-
-                    // События
-                    this.currentUtterance.onstart = () => {
-                        this.isPlaying = true;
-                    };
-
-                    this.currentUtterance.onend = () => {
-                        this.isPlaying = false;
-                        this.currentUtterance = null;
-                        resolve();
-                    };
-
-                    this.currentUtterance.onerror = (event) => {
-                        console.error('Speech synthesis error:', event);
-                        this.isPlaying = false;
-                        this.currentUtterance = null;
-                        // Пробуем резервный метод
-                        this.useFallbackTTS(text);
-                        resolve();
-                    };
-
-                    // Запускаем озвучку
-                    this.speechSynthesis.speak(this.currentUtterance);
-                });
-            }
+    stop() {
+        if (this.speechSynthesis) {
+            this.speechSynthesis.cancel();
+        }
+        this.isPlaying = false;
+        this.currentUtterance = null;
+    }
+}
 
             // Резервный метод через Google TTS API
             useFallbackTTS(text) {
@@ -1819,3 +1805,4 @@
     </script>
 </body>
 </html>
+
