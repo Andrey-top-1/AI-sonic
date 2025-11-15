@@ -4,11 +4,18 @@ import json
 import sys
 import logging
 from datetime import datetime
-import hashlib
+import os
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
+# Настройка логирования с UTF-8
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 logger = logging.getLogger(__name__)
+
+# Установка кодировки для stdout
+sys.stdout.reconfigure(encoding='utf-8') if hasattr(sys.stdout, 'reconfigure') else None
 
 # Конфигурация OpenRouter API
 OPENROUTER_API_KEY = "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"
@@ -177,7 +184,7 @@ class AIService:
                 return "Извините, произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз."
                 
         except Exception as e:
-            logger.error(f"AI API error: {e}")
+            logger.error(f"AI API error: {str(e)}")
             return "Извините, сервис временно недоступен. Пожалуйста, попробуйте позже."
 
     def _create_system_prompt(self, user_data):
@@ -248,7 +255,7 @@ class BackendAPI:
                 'message': str(e)
             }
         except Exception as e:
-            logger.error(f"Register user error: {e}")
+            logger.error(f"Register user error: {str(e)}")
             return {
                 'success': False,
                 'message': 'Внутренняя ошибка сервера'
@@ -276,7 +283,7 @@ class BackendAPI:
                     'message': 'Неверный номер телефона или пароль'
                 }
         except Exception as e:
-            logger.error(f"Login user error: {e}")
+            logger.error(f"Login user error: {str(e)}")
             return {
                 'success': False,
                 'message': 'Внутренняя ошибка сервера'
@@ -311,7 +318,7 @@ class BackendAPI:
                 'response': ai_response
             }
         except Exception as e:
-            logger.error(f"Send message error: {e}")
+            logger.error(f"Send message error: {str(e)}")
             return {
                 'success': False,
                 'message': 'Извините, произошла ошибка. Пожалуйста, попробуйте еще раз.'
@@ -329,7 +336,7 @@ class BackendAPI:
             
             return {'success': True, 'history': history}
         except Exception as e:
-            logger.error(f"Get chat history error: {e}")
+            logger.error(f"Get chat history error: {str(e)}")
             return {'success': False, 'history': []}
 
 # Глобальный экземпляр API
@@ -339,7 +346,12 @@ backend_api = BackendAPI()
 def main():
     if len(sys.argv) > 1:
         try:
-            args = json.loads(sys.argv[1])
+            # Читаем аргументы с правильной кодировкой
+            args_str = sys.argv[1]
+            if isinstance(args_str, bytes):
+                args_str = args_str.decode('utf-8')
+            
+            args = json.loads(args_str)
             action = args.get('action')
             
             if action == 'register':
@@ -358,14 +370,26 @@ def main():
             else:
                 result = {'success': False, 'error': 'Unknown action'}
             
-            print(json.dumps(result, ensure_ascii=False))
+            # Выводим результат с UTF-8 кодировкой
+            result_json = json.dumps(result, ensure_ascii=False, indent=2)
+            if hasattr(sys.stdout, 'buffer'):
+                sys.stdout.buffer.write(result_json.encode('utf-8'))
+                sys.stdout.buffer.write(b'\n')
+            else:
+                print(result_json)
             
         except Exception as e:
-            logger.error(f"Main execution error: {e}")
-            print(json.dumps({
+            logger.error(f"Main execution error: {str(e)}")
+            error_result = {
                 'success': False,
                 'message': f'Error: {str(e)}'
-            }, ensure_ascii=False))
+            }
+            error_json = json.dumps(error_result, ensure_ascii=False, indent=2)
+            if hasattr(sys.stdout, 'buffer'):
+                sys.stdout.buffer.write(error_json.encode('utf-8'))
+                sys.stdout.buffer.write(b'\n')
+            else:
+                print(error_json)
     else:
         print("Web app backend ready!")
 
