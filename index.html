@@ -866,28 +866,11 @@
         }
 
         async textToSpeech(text) {
-            try {
-                const response = await fetch('/api/text-to-speech', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text })
-                });
-                
-                if (response.ok) {
-                    const audioBlob = await response.blob();
-                    const audioUrl = URL.createObjectURL(audioBlob);
-                    return { success: true, audioUrl };
-                } else {
-                    const error = await response.json();
-                    return error;
-                }
-            } catch (error) {
-                console.error('TTS request error:', error);
-                return { 
-                    success: false, 
-                    message: 'Ошибка соединения с сервером озвучки' 
-                };
-            }
+            // Always use browser TTS - server TTS is disabled
+            return { 
+                success: false, 
+                message: 'Используется браузерная озвучка' 
+            };
         }
 
         async createPayment(plan) {
@@ -1079,33 +1062,13 @@
         }
     }
 
-    // Функция для использования серверного TTS
-    async function useServerTTS(text) {
-        try {
-            const result = await apiClient.textToSpeech(text);
-            
-            if (result.success && result.audioUrl) {
-                const audio = new Audio(result.audioUrl);
-                audio.play().catch(e => {
-                    console.error('Audio play error:', e);
-                    showNotification('Ошибка воспроизведения аудио', 'error');
-                });
-            } else {
-                showNotification(result.message || 'Озвучка временно недоступна', 'error');
-            }
-        } catch (error) {
-            console.error('Server TTS error:', error);
-            showNotification('Озвучка временно недоступна', 'error');
-        }
-    }
-
     async function textToSpeech(text) {
         try {
-            // Сначала пробуем использовать браузерный Web Speech API
+            // Используем только браузерный Web Speech API
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'ru-RU';
-                utterance.rate = 0.8; // Немного медленнее для лучшего понимания
+                utterance.rate = 0.8;
                 utterance.pitch = 1.0;
                 utterance.volume = 1.0;
 
@@ -1125,20 +1088,16 @@
 
                 utterance.onerror = function(event) {
                     console.error('Speech synthesis error:', event);
-                    // Если Web Speech API не работает, пробуем серверный TTS
-                    useServerTTS(text);
+                    showNotification('Ошибка озвучки в браузере', 'error');
                 };
 
                 speechSynthesis.speak(utterance);
-                return;
             } else {
-                // Если Web Speech API не поддерживается, используем серверный TTS
-                useServerTTS(text);
+                showNotification('Ваш браузер не поддерживает озвучку', 'error');
             }
         } catch (error) {
             console.error('TTS error:', error);
-            // Fallback на серверный TTS
-            useServerTTS(text);
+            showNotification('Ошибка озвучки', 'error');
         }
     }
 
@@ -1235,7 +1194,6 @@
             
             if (result.success) {
                 showNotification(`Платеж для тарифа "${result.payment_data.name}" создан!`, 'success');
-                // В реальном приложении здесь будет перенаправление на страницу оплаты
             } else {
                 showNotification('Ошибка создания платежа', 'error');
             }
@@ -1371,4 +1329,5 @@
 </script>
 </body>
 </html>
+
 
