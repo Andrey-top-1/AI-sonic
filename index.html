@@ -823,49 +823,50 @@
     </div>
 
     <script>
-        // API клиент для общения с сервером
-        class ApiClient {
-            constructor() {
-                this.baseUrl = '';
-            }
+    // API клиент для общения с сервером
+    class ApiClient {
+        constructor() {
+            this.baseUrl = '';
+        }
 
-            async registerUser(phone, name, birth_date, password) {
-                const response = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, name, birth_date, password })
-                });
-                return await response.json();
-            }
+        async registerUser(phone, name, birth_date, password) {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, name, birth_date, password })
+            });
+            return await response.json();
+        }
 
-            async loginUser(phone, password) {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, password })
-                });
-                return await response.json();
-            }
+        async loginUser(phone, password) {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, password })
+            });
+            return await response.json();
+        }
 
-            async sendMessage(user_data, message) {
-                const response = await fetch('/api/send-message', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_data, message })
-                });
-                return await response.json();
-            }
+        async sendMessage(user_data, message) {
+            const response = await fetch('/api/send-message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_data, message })
+            });
+            return await response.json();
+        }
 
-            async getChatHistory(user_data) {
-                const response = await fetch('/api/chat-history', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_data })
-                });
-                return await response.json();
-            }
+        async getChatHistory(user_data) {
+            const response = await fetch('/api/chat-history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_data })
+            });
+            return await response.json();
+        }
 
-            async textToSpeech(text) {
+        async textToSpeech(text) {
+            try {
                 const response = await fetch('/api/text-to-speech', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -880,439 +881,494 @@
                     const error = await response.json();
                     return error;
                 }
-            }
-
-            async createPayment(plan) {
-                const response = await fetch('/api/create-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plan })
-                });
-                return await response.json();
-            }
-        }
-
-        // Инициализация API клиента
-        const apiClient = new ApiClient();
-
-        // Остальной JavaScript код
-        let currentUser = null;
-        let recognition = null;
-        let isRecording = false;
-
-        function createStars() {
-            const starsContainer = document.getElementById('stars');
-            const starsCount = 100;
-            
-            for (let i = 0; i < starsCount; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                
-                const size = Math.random() * 2 + 1;
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                
-                star.style.left = `${Math.random() * 100}vw`;
-                star.style.top = `${Math.random() * 100}vh`;
-                
-                const duration = Math.random() * 20 + 10;
-                star.style.animationDuration = `${duration}s`;
-                star.style.animationDelay = `${Math.random() * 5}s`;
-                
-                starsContainer.appendChild(star);
-            }
-        }
-
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type} show`;
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 4000);
-        }
-
-        function openModal(modal) {
-            modal.classList.add('active');
-        }
-
-        function closeModal(modal) {
-            modal.classList.remove('active');
-        }
-
-        function closeAllModals() {
-            document.querySelectorAll('.modal').forEach(modal => closeModal(modal));
-        }
-
-        function updateUIForLoggedInUser(user) {
-            currentUser = user;
-            
-            document.getElementById('messageInput').disabled = false;
-            document.getElementById('messageInput').placeholder = "Опишите свой сон...";
-            document.getElementById('sendBtn').disabled = false;
-            document.getElementById('voiceBtn').disabled = false;
-            
-            document.getElementById('userIconSymbol').style.display = 'none';
-            document.getElementById('userInitials').style.display = 'block';
-            document.getElementById('userInitials').textContent = getInitials(user.name);
-            
-            document.getElementById('registerBtn').style.display = 'none';
-            document.getElementById('loginBtn').style.display = 'none';
-            document.getElementById('logoutBtn').style.display = 'block';
-            
-            loadChatHistory();
-        }
-
-        function updateUIForGuest() {
-            currentUser = null;
-            
-            document.getElementById('messageInput').disabled = true;
-            document.getElementById('messageInput').placeholder = "Войдите, чтобы отправить сообщение";
-            document.getElementById('sendBtn').disabled = true;
-            document.getElementById('voiceBtn').disabled = true;
-            
-            document.getElementById('userIconSymbol').style.display = 'block';
-            document.getElementById('userInitials').style.display = 'none';
-            
-            document.getElementById('registerBtn').style.display = 'block';
-            document.getElementById('loginBtn').style.display = 'block';
-            document.getElementById('logoutBtn').style.display = 'none';
-            
-            const chatMessages = document.getElementById('chatMessages');
-            chatMessages.innerHTML = '';
-            addMessage("Привет! Я ИИ-сонник. Опишите свой сон, и я помогу вам понять его значение. Для начала работы войдите в аккаунт.", 'bot');
-        }
-
-        function getInitials(name) {
-            return name.split(' ').map(word => word[0]).join('').toUpperCase();
-        }
-
-        async function loadChatHistory() {
-            if (!currentUser) return;
-            
-            try {
-                const result = await apiClient.getChatHistory(currentUser);
-                
-                if (result.history) {
-                    const chatMessages = document.getElementById('chatMessages');
-                    chatMessages.innerHTML = '';
-                    
-                    result.history.forEach(msg => {
-                        addMessage(msg.content, msg.role);
-                    });
-                }
             } catch (error) {
-                console.error('Error loading chat history:', error);
+                console.error('TTS request error:', error);
+                return { 
+                    success: false, 
+                    message: 'Ошибка соединения с сервером озвучки' 
+                };
             }
         }
 
-        function addMessage(text, sender) {
-            const chatMessages = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}-message`;
+        async createPayment(plan) {
+            const response = await fetch('/api/create-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan })
+            });
+            return await response.json();
+        }
+    }
+
+    // Инициализация API клиента
+    const apiClient = new ApiClient();
+
+    // Остальной JavaScript код
+    let currentUser = null;
+    let recognition = null;
+    let isRecording = false;
+
+    function createStars() {
+        const starsContainer = document.getElementById('stars');
+        const starsCount = 100;
+        
+        for (let i = 0; i < starsCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
             
-            const bubbleDiv = document.createElement('div');
-            bubbleDiv.className = 'message-bubble';
+            const size = Math.random() * 2 + 1;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
             
-            const timeDiv = document.createElement('div');
-            timeDiv.className = 'message-time';
-            timeDiv.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            star.style.left = `${Math.random() * 100}vw`;
+            star.style.top = `${Math.random() * 100}vh`;
             
-            if (sender === 'bot') {
-                const ttsBtn = document.createElement('button');
-                ttsBtn.className = 'tts-btn';
-                ttsBtn.setAttribute('aria-label', 'Озвучить сообщение');
-                ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-                ttsBtn.addEventListener('click', function() {
-                    textToSpeech(text);
+            const duration = Math.random() * 20 + 10;
+            star.style.animationDuration = `${duration}s`;
+            star.style.animationDelay = `${Math.random() * 5}s`;
+            
+            starsContainer.appendChild(star);
+        }
+    }
+
+    function showNotification(message, type = 'success') {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification ${type} show`;
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 4000);
+    }
+
+    function openModal(modal) {
+        modal.classList.add('active');
+    }
+
+    function closeModal(modal) {
+        modal.classList.remove('active');
+    }
+
+    function closeAllModals() {
+        document.querySelectorAll('.modal').forEach(modal => closeModal(modal));
+    }
+
+    function updateUIForLoggedInUser(user) {
+        currentUser = user;
+        
+        document.getElementById('messageInput').disabled = false;
+        document.getElementById('messageInput').placeholder = "Опишите свой сон...";
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('voiceBtn').disabled = false;
+        
+        document.getElementById('userIconSymbol').style.display = 'none';
+        document.getElementById('userInitials').style.display = 'block';
+        document.getElementById('userInitials').textContent = getInitials(user.name);
+        
+        document.getElementById('registerBtn').style.display = 'none';
+        document.getElementById('loginBtn').style.display = 'none';
+        document.getElementById('logoutBtn').style.display = 'block';
+        
+        loadChatHistory();
+    }
+
+    function updateUIForGuest() {
+        currentUser = null;
+        
+        document.getElementById('messageInput').disabled = true;
+        document.getElementById('messageInput').placeholder = "Войдите, чтобы отправить сообщение";
+        document.getElementById('sendBtn').disabled = true;
+        document.getElementById('voiceBtn').disabled = true;
+        
+        document.getElementById('userIconSymbol').style.display = 'block';
+        document.getElementById('userInitials').style.display = 'none';
+        
+        document.getElementById('registerBtn').style.display = 'block';
+        document.getElementById('loginBtn').style.display = 'block';
+        document.getElementById('logoutBtn').style.display = 'none';
+        
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = '';
+        addMessage("Привет! Я ИИ-сонник. Опишите свой сон, и я помогу вам понять его значение. Для начала работы войдите в аккаунт.", 'bot');
+    }
+
+    function getInitials(name) {
+        return name.split(' ').map(word => word[0]).join('').toUpperCase();
+    }
+
+    async function loadChatHistory() {
+        if (!currentUser) return;
+        
+        try {
+            const result = await apiClient.getChatHistory(currentUser);
+            
+            if (result.history) {
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = '';
+                
+                result.history.forEach(msg => {
+                    addMessage(msg.content, msg.role);
                 });
-                bubbleDiv.appendChild(ttsBtn);
             }
-            
-            bubbleDiv.innerHTML += text;
-            bubbleDiv.appendChild(timeDiv);
-            
-            messageDiv.appendChild(bubbleDiv);
-            chatMessages.appendChild(messageDiv);
-            
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        } catch (error) {
+            console.error('Error loading chat history:', error);
         }
+    }
 
-        async function sendMessage() {
-            if (!currentUser) {
-                openModal(document.getElementById('loginModal'));
+    function addMessage(text, sender) {
+        const chatMessages = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}-message`;
+        
+        const bubbleDiv = document.createElement('div');
+        bubbleDiv.className = 'message-bubble';
+        
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'message-time';
+        timeDiv.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        if (sender === 'bot') {
+            const ttsBtn = document.createElement('button');
+            ttsBtn.className = 'tts-btn';
+            ttsBtn.setAttribute('aria-label', 'Озвучить сообщение');
+            ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            ttsBtn.addEventListener('click', function() {
+                textToSpeech(text);
+            });
+            bubbleDiv.appendChild(ttsBtn);
+        }
+        
+        bubbleDiv.innerHTML += text;
+        bubbleDiv.appendChild(timeDiv);
+        
+        messageDiv.appendChild(bubbleDiv);
+        chatMessages.appendChild(messageDiv);
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function sendMessage() {
+        if (!currentUser) {
+            openModal(document.getElementById('loginModal'));
+            return;
+        }
+        
+        const messageInput = document.getElementById('messageInput');
+        const message = messageInput.value.trim();
+        
+        if (message === '') return;
+        
+        addMessage(message, 'user');
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        
+        showLoadingIndicator();
+        
+        try {
+            const result = await apiClient.sendMessage(currentUser, message);
+            
+            if (result.success) {
+                removeLoadingIndicator();
+                addMessage(result.response, 'bot');
+            } else {
+                throw new Error(result.error || 'Ошибка отправки сообщения');
+            }
+        } catch (error) {
+            removeLoadingIndicator();
+            addMessage('Извините, произошла ошибка. Пожалуйста, попробуйте еще раз.', 'bot');
+        }
+    }
+
+    // Функция для использования серверного TTS
+    async function useServerTTS(text) {
+        try {
+            const result = await apiClient.textToSpeech(text);
+            
+            if (result.success && result.audioUrl) {
+                const audio = new Audio(result.audioUrl);
+                audio.play().catch(e => {
+                    console.error('Audio play error:', e);
+                    showNotification('Ошибка воспроизведения аудио', 'error');
+                });
+            } else {
+                showNotification(result.message || 'Озвучка временно недоступна', 'error');
+            }
+        } catch (error) {
+            console.error('Server TTS error:', error);
+            showNotification('Озвучка временно недоступна', 'error');
+        }
+    }
+
+    async function textToSpeech(text) {
+        try {
+            // Сначала пробуем использовать браузерный Web Speech API
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ru-RU';
+                utterance.rate = 0.8; // Немного медленнее для лучшего понимания
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+
+                // Пробуем найти русский голос
+                const voices = speechSynthesis.getVoices();
+                const russianVoice = voices.find(voice => 
+                    voice.lang.includes('ru') || voice.lang.includes('RU')
+                );
+                
+                if (russianVoice) {
+                    utterance.voice = russianVoice;
+                }
+
+                utterance.onend = function() {
+                    console.log('Speech synthesis finished');
+                };
+
+                utterance.onerror = function(event) {
+                    console.error('Speech synthesis error:', event);
+                    // Если Web Speech API не работает, пробуем серверный TTS
+                    useServerTTS(text);
+                };
+
+                speechSynthesis.speak(utterance);
+                return;
+            } else {
+                // Если Web Speech API не поддерживается, используем серверный TTS
+                useServerTTS(text);
+            }
+        } catch (error) {
+            console.error('TTS error:', error);
+            // Fallback на серверный TTS
+            useServerTTS(text);
+        }
+    }
+
+    function initSpeechRecognition() {
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'ru-RU';
+
+            recognition.onstart = function() {
+                isRecording = true;
+                document.getElementById('voiceBtn').classList.add('pulse');
+                document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-stop"></i>';
+                document.getElementById('messageInput').placeholder = "Говорите...";
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('messageInput').value = transcript;
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                showNotification('Ошибка распознавания речи', 'error');
+            };
+
+            recognition.onend = function() {
+                isRecording = false;
+                document.getElementById('voiceBtn').classList.remove('pulse');
+                document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+                document.getElementById('messageInput').placeholder = "Опишите свой сон...";
+            };
+        } else {
+            showNotification('Браузер не поддерживает распознавание речи', 'error');
+        }
+    }
+
+    function toggleSpeechRecognition() {
+        if (!currentUser) {
+            openModal(document.getElementById('loginModal'));
+            return;
+        }
+        
+        if (!isRecording) {
+            recognition.start();
+        } else {
+            recognition.stop();
+        }
+    }
+
+    function showLoadingIndicator() {
+        const chatMessages = document.getElementById('chatMessages');
+        const skeletonDiv = document.createElement('div');
+        skeletonDiv.className = 'message bot-message skeleton';
+        skeletonDiv.id = 'loadingIndicator';
+        
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'skeleton-avatar';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'skeleton-content';
+        
+        const line1 = document.createElement('div');
+        line1.className = 'skeleton-line short';
+        
+        const line2 = document.createElement('div');
+        line2.className = 'skeleton-line medium';
+        
+        const line3 = document.createElement('div');
+        line3.className = 'skeleton-line';
+        
+        contentDiv.appendChild(line1);
+        contentDiv.appendChild(line2);
+        contentDiv.appendChild(line3);
+        
+        skeletonDiv.appendChild(avatarDiv);
+        skeletonDiv.appendChild(contentDiv);
+        
+        chatMessages.appendChild(skeletonDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function removeLoadingIndicator() {
+        const indicator = document.getElementById('loadingIndicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
+
+    async function createPayment(plan) {
+        try {
+            const result = await apiClient.createPayment(plan);
+            
+            if (result.success) {
+                showNotification(`Платеж для тарифа "${result.payment_data.name}" создан!`, 'success');
+                // В реальном приложении здесь будет перенаправление на страницу оплаты
+            } else {
+                showNotification('Ошибка создания платежа', 'error');
+            }
+        } catch (error) {
+            showNotification('Ошибка создания платежа', 'error');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        createStars();
+        initSpeechRecognition();
+        updateUIForGuest();
+        
+        document.getElementById('registerBtn').addEventListener('click', () => openModal(document.getElementById('registerModal')));
+        document.getElementById('loginBtn').addEventListener('click', () => openModal(document.getElementById('loginModal')));
+        document.getElementById('paymentBtn').addEventListener('click', () => openModal(document.getElementById('paymentModal')));
+        document.getElementById('showLoginFromRegister').addEventListener('click', () => {
+            closeModal(document.getElementById('registerModal'));
+            openModal(document.getElementById('loginModal'));
+        });
+        document.getElementById('showRegisterFromLogin').addEventListener('click', () => {
+            closeModal(document.getElementById('loginModal'));
+            openModal(document.getElementById('registerModal'));
+        });
+        
+        document.querySelectorAll('.close-modal').forEach(button => {
+            button.addEventListener('click', function() {
+                const modal = this.closest('.modal');
+                closeModal(modal);
+            });
+        });
+        
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeAllModals();
+            }
+        });
+        
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('registerName').value,
+                birth_date: document.getElementById('registerBirthDate').value,
+                phone: document.getElementById('registerPhone').value,
+                password: document.getElementById('registerPassword').value
+            };
+            
+            if (formData.password !== document.getElementById('registerConfirmPassword').value) {
+                showNotification('Пароли не совпадают', 'error');
                 return;
             }
             
-            const messageInput = document.getElementById('messageInput');
-            const message = messageInput.value.trim();
-            
-            if (message === '') return;
-            
-            addMessage(message, 'user');
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
-            
-            showLoadingIndicator();
-            
             try {
-                const result = await apiClient.sendMessage(currentUser, message);
+                const result = await apiClient.registerUser(
+                    formData.phone,
+                    formData.name,
+                    formData.birth_date,
+                    formData.password
+                );
                 
                 if (result.success) {
-                    removeLoadingIndicator();
-                    addMessage(result.response, 'bot');
-                } else {
-                    throw new Error(result.error || 'Ошибка отправки сообщения');
-                }
-            } catch (error) {
-                removeLoadingIndicator();
-                addMessage('Извините, произошла ошибка. Пожалуйста, попробуйте еще раз.', 'bot');
-            }
-        }
-
-        async function textToSpeech(text) {
-            try {
-                const result = await apiClient.textToSpeech(text);
-                
-                if (result.success) {
-                    const audio = new Audio(result.audioUrl);
-                    audio.play();
+                    closeModal(document.getElementById('registerModal'));
+                    showNotification('Регистрация прошла успешно!');
+                    document.getElementById('registerForm').reset();
+                    
+                    // Автоматический вход после регистрации
+                    const loginResult = await apiClient.loginUser(formData.phone, formData.password);
+                    if (loginResult.success) {
+                        updateUIForLoggedInUser(loginResult.user);
+                    }
                 } else {
                     showNotification(result.message, 'error');
                 }
             } catch (error) {
-                console.error('TTS error:', error);
-                showNotification('Ошибка озвучки', 'error');
+                showNotification('Ошибка регистрации', 'error');
             }
-        }
-
-        function initSpeechRecognition() {
-            if ('webkitSpeechRecognition' in window) {
-                recognition = new webkitSpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
-                recognition.lang = 'ru-RU';
-
-                recognition.onstart = function() {
-                    isRecording = true;
-                    document.getElementById('voiceBtn').classList.add('pulse');
-                    document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-stop"></i>';
-                    document.getElementById('messageInput').placeholder = "Говорите...";
-                };
-
-                recognition.onresult = function(event) {
-                    const transcript = event.results[0][0].transcript;
-                    document.getElementById('messageInput').value = transcript;
-                };
-
-                recognition.onerror = function(event) {
-                    console.error('Speech recognition error:', event.error);
-                    showNotification('Ошибка распознавания речи', 'error');
-                };
-
-                recognition.onend = function() {
-                    isRecording = false;
-                    document.getElementById('voiceBtn').classList.remove('pulse');
-                    document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-microphone"></i>';
-                    document.getElementById('messageInput').placeholder = "Опишите свой сон...";
-                };
-            } else {
-                showNotification('Браузер не поддерживает распознавание речи', 'error');
-            }
-        }
-
-        function toggleSpeechRecognition() {
-            if (!currentUser) {
-                openModal(document.getElementById('loginModal'));
-                return;
-            }
+        });
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            if (!isRecording) {
-                recognition.start();
-            } else {
-                recognition.stop();
-            }
-        }
-
-        function showLoadingIndicator() {
-            const chatMessages = document.getElementById('chatMessages');
-            const skeletonDiv = document.createElement('div');
-            skeletonDiv.className = 'message bot-message skeleton';
-            skeletonDiv.id = 'loadingIndicator';
+            const formData = {
+                phone: document.getElementById('loginPhone').value,
+                password: document.getElementById('loginPassword').value
+            };
             
-            const avatarDiv = document.createElement('div');
-            avatarDiv.className = 'skeleton-avatar';
-            
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'skeleton-content';
-            
-            const line1 = document.createElement('div');
-            line1.className = 'skeleton-line short';
-            
-            const line2 = document.createElement('div');
-            line2.className = 'skeleton-line medium';
-            
-            const line3 = document.createElement('div');
-            line3.className = 'skeleton-line';
-            
-            contentDiv.appendChild(line1);
-            contentDiv.appendChild(line2);
-            contentDiv.appendChild(line3);
-            
-            skeletonDiv.appendChild(avatarDiv);
-            skeletonDiv.appendChild(contentDiv);
-            
-            chatMessages.appendChild(skeletonDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function removeLoadingIndicator() {
-            const indicator = document.getElementById('loadingIndicator');
-            if (indicator) {
-                indicator.remove();
-            }
-        }
-
-        async function createPayment(plan) {
             try {
-                const result = await apiClient.createPayment(plan);
+                const result = await apiClient.loginUser(formData.phone, formData.password);
                 
                 if (result.success) {
-                    showNotification(`Платеж для тарифа "${result.payment_data.name}" создан!`, 'success');
-                    // В реальном приложении здесь будет перенаправление на страницу оплаты
+                    closeModal(document.getElementById('loginModal'));
+                    showNotification('Вход выполнен успешно!');
+                    updateUIForLoggedInUser(result.user);
+                    document.getElementById('loginForm').reset();
                 } else {
-                    showNotification('Ошибка создания платежа', 'error');
+                    showNotification(result.message, 'error');
                 }
             } catch (error) {
-                showNotification('Ошибка создания платежа', 'error');
+                showNotification('Ошибка входа', 'error');
             }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            createStars();
-            initSpeechRecognition();
+        });
+        
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            currentUser = null;
+            showNotification('Вы вышли из аккаунта');
             updateUIForGuest();
-            
-            document.getElementById('registerBtn').addEventListener('click', () => openModal(document.getElementById('registerModal')));
-            document.getElementById('loginBtn').addEventListener('click', () => openModal(document.getElementById('loginModal')));
-            document.getElementById('paymentBtn').addEventListener('click', () => openModal(document.getElementById('paymentModal')));
-            document.getElementById('showLoginFromRegister').addEventListener('click', () => {
-                closeModal(document.getElementById('registerModal'));
-                openModal(document.getElementById('loginModal'));
-            });
-            document.getElementById('showRegisterFromLogin').addEventListener('click', () => {
-                closeModal(document.getElementById('loginModal'));
-                openModal(document.getElementById('registerModal'));
-            });
-            
-            document.querySelectorAll('.close-modal').forEach(button => {
-                button.addEventListener('click', function() {
-                    const modal = this.closest('.modal');
-                    closeModal(modal);
-                });
-            });
-            
-            window.addEventListener('click', function(event) {
-                if (event.target.classList.contains('modal')) {
-                    closeAllModals();
-                }
-            });
-            
-            document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        });
+        
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        
+        document.getElementById('messageInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                
-                const formData = {
-                    name: document.getElementById('registerName').value,
-                    birth_date: document.getElementById('registerBirthDate').value,
-                    phone: document.getElementById('registerPhone').value,
-                    password: document.getElementById('registerPassword').value
-                };
-                
-                if (formData.password !== document.getElementById('registerConfirmPassword').value) {
-                    showNotification('Пароли не совпадают', 'error');
-                    return;
-                }
-                
-                try {
-                    const result = await apiClient.registerUser(
-                        formData.phone,
-                        formData.name,
-                        formData.birth_date,
-                        formData.password
-                    );
-                    
-                    if (result.success) {
-                        closeModal(document.getElementById('registerModal'));
-                        showNotification('Регистрация прошла успешно!');
-                        document.getElementById('registerForm').reset();
-                        
-                        // Автоматический вход после регистрации
-                        const loginResult = await apiClient.loginUser(formData.phone, formData.password);
-                        if (loginResult.success) {
-                            updateUIForLoggedInUser(loginResult.user);
-                        }
-                    } else {
-                        showNotification(result.message, 'error');
-                    }
-                } catch (error) {
-                    showNotification('Ошибка регистрации', 'error');
-                }
-            });
-            
-            document.getElementById('loginForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const formData = {
-                    phone: document.getElementById('loginPhone').value,
-                    password: document.getElementById('loginPassword').value
-                };
-                
-                try {
-                    const result = await apiClient.loginUser(formData.phone, formData.password);
-                    
-                    if (result.success) {
-                        closeModal(document.getElementById('loginModal'));
-                        showNotification('Вход выполнен успешно!');
-                        updateUIForLoggedInUser(result.user);
-                        document.getElementById('loginForm').reset();
-                    } else {
-                        showNotification(result.message, 'error');
-                    }
-                } catch (error) {
-                    showNotification('Ошибка входа', 'error');
-                }
-            });
-            
-            document.getElementById('logoutBtn').addEventListener('click', function() {
-                currentUser = null;
-                showNotification('Вы вышли из аккаунта');
-                updateUIForGuest();
-            });
-            
-            document.getElementById('sendBtn').addEventListener('click', sendMessage);
-            
-            document.getElementById('messageInput').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-            
-            document.getElementById('messageInput').addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
-            });
-            
-            document.getElementById('voiceBtn').addEventListener('click', toggleSpeechRecognition);
-            
-            document.querySelectorAll('.plan-card .form-button').forEach(button => {
-                button.addEventListener('click', function() {
-                    const plan = this.getAttribute('data-plan');
-                    createPayment(plan);
-                });
+                sendMessage();
+            }
+        });
+        
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
+        document.getElementById('voiceBtn').addEventListener('click', toggleSpeechRecognition);
+        
+        document.querySelectorAll('.plan-card .form-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const plan = this.getAttribute('data-plan');
+                createPayment(plan);
             });
         });
-    </script>
+    });
+</script>
 </body>
 </html>
+
