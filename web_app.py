@@ -5,17 +5,16 @@ import sys
 import logging
 from datetime import datetime
 import os
-import io
 
-# Принудительная установка UTF-8 кодировки
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+# Принудительная установка UTF-8 кодировки для всего Python
+sys.stdout.reconfigure(encoding='utf-8') if hasattr(sys.stdout, 'reconfigure') else None
+sys.stderr.reconfigure(encoding='utf-8') if hasattr(sys.stderr, 'reconfigure') else None
 
-# Настройка логирования ТОЛЬКО в stderr
+# Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stderr)]  # Логи ТОЛЬКО в stderr
+    handlers=[logging.StreamHandler(sys.stderr)]
 )
 logger = logging.getLogger(__name__)
 
@@ -26,23 +25,67 @@ OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 class Database:
     def __init__(self, db_path="dream_interpreter.db"):
         self.db_path = db_path
+        self._init_db()
 
-    def create_user(self, phone, name, birth_date, password):
+    def _init_db(self):
+        """Инициализация базы данных"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Создание таблиц, если они не существуют
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                phone TEXT UNIQUE,
+                name TEXT NOT NULL,
+                birth_date TEXT,
+                password TEXT,
+                telegram_id TEXT UNIQUE,
+                created_at TEXT
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS chats (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                chat_type TEXT DEFAULT 'web',
+                telegram_chat_id TEXT,
+                created_at TEXT,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chat_id INTEGER,
+                role TEXT,
+                content TEXT,
+                timestamp TEXT,
+                FOREIGN KEY (chat_id) REFERENCES chats (id)
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+
+    def create_user(self, phone, name, birth_date, password, telegram_id=None):
         """Создание нового пользователя"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
         try:
             cursor.execute('''
-                INSERT INTO users (phone, name, birth_date, password, created_at)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (phone, name, birth_date, password, datetime.now().isoformat()))
+                INSERT INTO users (phone, name, birth_date, password, telegram_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (phone, name, birth_date, password, telegram_id, datetime.now().isoformat()))
             
             user_id = cursor.lastrowid
             conn.commit()
             return user_id
         except sqlite3.IntegrityError:
-            raise ValueError("Пользователь с таким номером телефона уже существует")
+            raise ValueError("Пользователь с таким номером телефона или Telegram ID уже существует")
         finally:
             conn.close()
 
@@ -52,7 +95,7 @@ class Database:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, phone, name, birth_date, password, created_at 
+            SELECT id, phone, name, birth_date, password, telegram_id, created_at 
             FROM users WHERE phone = ?
         ''', (phone,))
         
@@ -66,11 +109,37 @@ class Database:
                 'name': row[2],
                 'birth_date': row[3],
                 'password': row[4],
-                'created_at': row[5]
+                'telegram_id': row[5],
+                'created_at': row[6]
             }
         return None
 
-    def get_or_create_chat(self, user_id, chat_type='web'):
+    def get_user_by_telegram_id(self, telegram_id):
+        """Получение пользователя по Telegram ID"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, phone, name, birth_date, password, telegram_id, created_at 
+            FROM users WHERE telegram_id = ?
+        ''', (telegram_id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return {
+                'id': row[0],
+                'phone': row[1],
+                'name': row[2],
+                'birth_date': row[3],
+                'password': row[4],
+                'telegram_id': row[5],
+                'created_at': row[6]
+            }
+        return None
+
+    def get_or_create_chat(self, user_id, chat_type='web', telegram_chat_id=None):
         """Получение или создание чата"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -86,9 +155,9 @@ class Database:
             chat_id = row[0]
         else:
             cursor.execute('''
-                INSERT INTO chats (user_id, chat_type, created_at)
-                VALUES (?, ?, ?)
-            ''', (user_id, chat_type, datetime.now().isoformat()))
+                INSERT INTO chats (user_id, chat_type, telegram_chat_id, created_at)
+                VALUES (?, ?, ?, ?)
+            ''', (user_id, chat_type, telegram_chat_id, datetime.now().isoformat()))
             chat_id = cursor.lastrowid
             conn.commit()
         
@@ -158,7 +227,7 @@ class AIService:
             
             logger.info(f"Sending request to AI with {len(messages)} messages")
             
-            # Подготавливаем данные для запроса с UTF-8 кодировкой
+            # Подготавливаем данные для запроса
             request_data = {
                 "model": "deepseek/deepseek-chat-v3-0324",
                 "messages": messages,
@@ -166,14 +235,14 @@ class AIService:
                 "temperature": 0.7
             }
             
-            # Отправляем запрос к OpenRouter API с правильной кодировкой
+            # Отправляем запрос к OpenRouter API с правильными заголовками
             response = requests.post(
                 url=self.api_url,
                 headers={
                     "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
+                    "Content-Type": "application/json; charset=utf-8",
                     "HTTP-Referer": "https://dream-interpreter.com",
-                    "X-Title": "ИИ Сонник"
+                    "X-Title": "Dream Interpreter"
                 },
                 json=request_data,
                 timeout=30
@@ -185,20 +254,17 @@ class AIService:
                 logger.info("AI response received successfully")
                 return ai_response
             else:
-                logger.error(f"OpenRouter API error: {response.status_code} - {response.text}")
+                logger.error(f"OpenRouter API error: {response.status_code}")
                 return "Извините, произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз."
                 
-        except requests.exceptions.RequestException as e:
-            logger.error(f"AI API request error: {str(e)}")
-            return "Извините, произошла ошибка соединения. Пожалуйста, попробуйте еще раз."
         except Exception as e:
             logger.error(f"AI API error: {str(e)}")
             return "Извините, сервис временно недоступен. Пожалуйста, попробуйте позже."
 
     def _create_system_prompt(self, user_data):
         """Создание системного промпта с данными пользователя"""
-        age = self._calculate_age(user_data['birth_date'])
-        name = user_data['name']
+        age = self._calculate_age(user_data.get('birth_date', '2000-01-01'))
+        name = user_data.get('name', 'пользователь')
         
         return f"""Ты - опытный психолог-толкователь снов с 20-летним стажем. Твоя задача - анализировать сны и давать глубокую психологическую интерпретацию.
 
@@ -207,23 +273,15 @@ class AIService:
 - Возраст: {age} лет
 
 ТВОИ ОСОБЕННОСТИ:
-1. Анализируй сны с точки зрения психологии (Фрейд, Юнг, современные подходы)
-2. Учитывай контекст предыдущих бесед и снов пользователя
+1. Анализируй сны с точки зрения психологии
+2. Учитывай контекст предыдущих бесед
 3. Давай развернутые, но понятные объяснения
 4. Будь эмпатичным и поддерживающим
 5. Предлагай практические рекомендации
-6. Связывай символы сна с реальной жизнью пользователя
-7. Учитывай возрастные особенности
-
-ВАЖНЫЕ ПРИНЦИПИ:
-- Сны - это способ подсознания общаться с сознанием
-- Каждый символ имеет значение
-- Контекст предыдущих снов важен для точной интерпретации
-- Давай не только анализ, но и рекомендации
 
 ФОРМАТ ОТВЕТА:
 1. Анализ основных символов
-2. Психологическая интерпретация
+2. Психологическая интерпретация  
 3. Связь с реальной жизнью
 4. Практические рекомендации
 
@@ -310,7 +368,7 @@ class BackendAPI:
             # Сохраняем сообщение пользователя
             self.db.save_message(chat_id, 'user', message)
             
-            # Получаем историю чата (последние 6 сообщений для контекста)
+            # Получаем историю чата
             chat_history = self.db.get_chat_history(chat_id, limit=6)
             
             logger.info(f"Chat history for user {user['name']}: {len(chat_history)} messages")
@@ -350,16 +408,10 @@ class BackendAPI:
 # Глобальный экземпляр API
 backend_api = BackendAPI()
 
-# Основная функция для обработки команд
 def main():
     if len(sys.argv) > 1:
         try:
-            # Читаем аргументы с правильной кодировкой
-            args_str = sys.argv[1]
-            if isinstance(args_str, bytes):
-                args_str = args_str.decode('utf-8')
-            
-            args = json.loads(args_str)
+            args = json.loads(sys.argv[1])
             action = args.get('action')
             
             if action == 'register':
@@ -378,7 +430,7 @@ def main():
             else:
                 result = {'success': False, 'error': 'Unknown action'}
             
-            # Выводим ТОЛЬКО JSON в stdout
+            # Выводим только JSON
             result_json = json.dumps(result, ensure_ascii=False, separators=(',', ':'))
             print(result_json)
             
@@ -390,9 +442,6 @@ def main():
             }
             error_json = json.dumps(error_result, ensure_ascii=False, separators=(',', ':'))
             print(error_json)
-    else:
-        # Если нет аргументов, просто выводим сообщение в stderr
-        logger.info("Web app backend ready!")
 
 if __name__ == '__main__':
     main()
