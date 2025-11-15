@@ -2,7 +2,6 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "node api.js"
 startCommand = "python web_app.py"
 
 [env]
