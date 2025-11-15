@@ -1,118 +1,30 @@
 import sqlite3
 import requests
 import json
-import sys
 import logging
-from datetime import datetime
 import os
-
-# Принудительная установка UTF-8 кодировки для всего Python
-sys.stdout.reconfigure(encoding='utf-8') if hasattr(sys.stdout, 'reconfigure') else None
-sys.stderr.reconfigure(encoding='utf-8') if hasattr(sys.stderr, 'reconfigure') else None
+from datetime import datetime
+import telebot
 
 # Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stderr)]
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Конфигурация OpenRouter API
+# Конфигурация Telegram бота
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8328551756:AAEWPTFIWrREap94-pL86p6-nWM_3UJcB2g')
 OPENROUTER_API_KEY = "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"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == 'YOUR_TELEGRAM_BOT_TOKEN':
+    logger.error("Please set TELEGRAM_BOT_TOKEN environment variable")
+    exit(1)
+
+# Инициализация бота
+bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 
 class Database:
     def __init__(self, db_path="dream_interpreter.db"):
         self.db_path = db_path
-        self._init_db()
-
-    def _init_db(self):
-        """Инициализация базы данных"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Создание таблиц, если они не существуют
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                phone TEXT UNIQUE,
-                name TEXT NOT NULL,
-                birth_date TEXT,
-                password TEXT,
-                telegram_id TEXT UNIQUE,
-                created_at TEXT
-            )
-        ''')
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS chats (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                chat_type TEXT DEFAULT 'web',
-                telegram_chat_id TEXT,
-                created_at TEXT,
-                FOREIGN KEY (user_id) REFERENCES users (id)
-            )
-        ''')
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                chat_id INTEGER,
-                role TEXT,
-                content TEXT,
-                timestamp TEXT,
-                FOREIGN KEY (chat_id) REFERENCES chats (id)
-            )
-        ''')
-        
-        conn.commit()
-        conn.close()
-
-    def create_user(self, phone, name, birth_date, password, telegram_id=None):
-        """Создание нового пользователя"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-                INSERT INTO users (phone, name, birth_date, password, telegram_id, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (phone, name, birth_date, password, telegram_id, datetime.now().isoformat()))
-            
-            user_id = cursor.lastrowid
-            conn.commit()
-            return user_id
-        except sqlite3.IntegrityError:
-            raise ValueError("Пользователь с таким номером телефона или Telegram ID уже существует")
-        finally:
-            conn.close()
-
-    def get_user_by_phone(self, phone):
-        """Получение пользователя по номеру телефона"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT id, phone, name, birth_date, password, telegram_id, created_at 
-            FROM users WHERE phone = ?
-        ''', (phone,))
-        
-        row = cursor.fetchone()
-        conn.close()
-        
-        if row:
-            return {
-                'id': row[0],
-                'phone': row[1],
-                'name': row[2],
-                'birth_date': row[3],
-                'password': row[4],
-                'telegram_id': row[5],
-                'created_at': row[6]
-            }
-        return None
 
     def get_user_by_telegram_id(self, telegram_id):
         """Получение пользователя по Telegram ID"""
@@ -120,7 +32,7 @@ class Database:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, phone, name, birth_date, password, telegram_id, created_at 
+            SELECT id, phone, name, birth_date, telegram_id, created_at 
             FROM users WHERE telegram_id = ?
         ''', (telegram_id,))
         
@@ -133,21 +45,41 @@ class Database:
                 'phone': row[1],
                 'name': row[2],
                 'birth_date': row[3],
-                'password': row[4],
-                'telegram_id': row[5],
-                'created_at': row[6]
+                'telegram_id': row[4],
+                'created_at': row[5]
             }
         return None
 
-    def get_or_create_chat(self, user_id, chat_type='web', telegram_chat_id=None):
+    def create_telegram_user(self, telegram_id, name):
+        """Создание пользователя Telegram"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('''
+                INSERT INTO users (telegram_id, name, birth_date, password, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (telegram_id, name, '2000-01-01', 'telegram', datetime.now().isoformat()))
+            
+            user_id = cursor.lastrowid
+            conn.commit()
+            return user_id
+        except sqlite3.IntegrityError:
+            # Если пользователь уже существует, просто возвращаем его ID
+            user = self.get_user_by_telegram_id(telegram_id)
+            return user['id'] if user else None
+        finally:
+            conn.close()
+
+    def get_or_create_chat(self, user_id, telegram_chat_id):
         """Получение или создание чата"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
         cursor.execute('''
             SELECT id FROM chats 
-            WHERE user_id = ? AND chat_type = ?
-        ''', (user_id, chat_type))
+            WHERE user_id = ? AND chat_type = 'telegram'
+        ''', (user_id,))
         
         row = cursor.fetchone()
         
@@ -156,8 +88,8 @@ class Database:
         else:
             cursor.execute('''
                 INSERT INTO chats (user_id, chat_type, telegram_chat_id, created_at)
-                VALUES (?, ?, ?, ?)
-            ''', (user_id, chat_type, telegram_chat_id, datetime.now().isoformat()))
+                VALUES (?, 'telegram', ?, ?)
+            ''', (user_id, telegram_chat_id, datetime.now().isoformat()))
             chat_id = cursor.lastrowid
             conn.commit()
         
@@ -177,7 +109,7 @@ class Database:
         conn.commit()
         conn.close()
 
-    def get_chat_history(self, chat_id, limit=10):
+    def get_chat_history(self, chat_id, limit=6):
         """Получение истории чата"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -207,11 +139,24 @@ class AIService:
         self.api_url = OPENROUTER_API_URL
 
     def get_ai_response(self, user_message, user_data, chat_history):
-        """Получение ответа от AI с учетом истории и данных пользователя"""
+        """Получение ответа от AI"""
         try:
-            # Создаем системный промт с данными пользователя
-            system_prompt = self._create_system_prompt(user_data)
-            
+            # Создаем системный промт
+            system_prompt = f"""Ты - опытный психолог-толкователь снов. Анализируй сны и давай глубокую психологическую интерпретацию.
+
+Пользователь: {user_data.get('name', 'пользователь')}
+
+Твои особенности:
+1. Анализируй сны с точки зрения психологии
+2. Будь эмпатичным и поддерживающим
+3. Давай развернутые, но понятные объяснения
+4. Предлагай практические рекомендации
+
+Формат ответа:
+- Анализ символов
+- Психологическая интерпретация  
+- Практические рекомендации"""
+
             # Формируем сообщения для AI
             messages = [{"role": "system", "content": system_prompt}]
             
@@ -225,223 +170,98 @@ class AIService:
             # Добавляем текущее сообщение пользователя
             messages.append({"role": "user", "content": user_message})
             
-            logger.info(f"Sending request to AI with {len(messages)} messages")
-            
-            # Подготавливаем данные для запроса
-            request_data = {
-                "model": "deepseek/deepseek-chat-v3-0324",
-                "messages": messages,
-                "max_tokens": 1000,
-                "temperature": 0.7
-            }
-            
-            # Отправляем запрос к OpenRouter API с правильными заголовками
+            # Отправляем запрос к OpenRouter API
             response = requests.post(
                 url=self.api_url,
                 headers={
                     "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json; charset=utf-8",
-                    "HTTP-Referer": "https://dream-interpreter.com",
-                    "X-Title": "Dream Interpreter"
+                    "Content-Type": "application/json; charset=utf-8"
                 },
-                json=request_data,
+                json={
+                    "model": "deepseek/deepseek-chat-v3-0324",
+                    "messages": messages,
+                    "max_tokens": 800,
+                    "temperature": 0.7
+                },
                 timeout=30
             )
             
             if response.status_code == 200:
                 data = response.json()
-                ai_response = data['choices'][0]['message']['content']
-                logger.info("AI response received successfully")
-                return ai_response
+                return data['choices'][0]['message']['content']
             else:
                 logger.error(f"OpenRouter API error: {response.status_code}")
-                return "Извините, произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз."
+                return "Извините, произошла ошибка. Пожалуйста, попробуйте еще раз."
                 
         except Exception as e:
             logger.error(f"AI API error: {str(e)}")
-            return "Извините, сервис временно недоступен. Пожалуйста, попробуйте позже."
+            return "Извините, сервис временно недоступен."
 
-    def _create_system_prompt(self, user_data):
-        """Создание системного промпта с данными пользователя"""
-        age = self._calculate_age(user_data.get('birth_date', '2000-01-01'))
-        name = user_data.get('name', 'пользователь')
-        
-        return f"""Ты - опытный психолог-толкователь снов с 20-летним стажем. Твоя задача - анализировать сны и давать глубокую психологическую интерпретацию.
-
-ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ:
-- Имя: {name}
-- Возраст: {age} лет
-
-ТВОИ ОСОБЕННОСТИ:
-1. Анализируй сны с точки зрения психологии
-2. Учитывай контекст предыдущих бесед
-3. Давай развернутые, но понятные объяснения
-4. Будь эмпатичным и поддерживающим
-5. Предлагай практические рекомендации
-
-ФОРМАТ ОТВЕТА:
-1. Анализ основных символов
-2. Психологическая интерпретация  
-3. Связь с реальной жизнью
-4. Практические рекомендации
-
-Помни: ты помогаешь {name} лучше понять себя через анализ снов."""
-
-    def _calculate_age(self, birth_date_str):
-        """Расчет возраста"""
-        try:
-            birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d')
-            today = datetime.now()
-            age = today.year - birth_date.year
-            
-            if today.month < birth_date.month or (today.month == birth_date.month and today.day < birth_date.day):
-                age -= 1
-                
-            return age
-        except:
-            return "неизвестно"
-
-class BackendAPI:
+class TelegramBotHandler:
     def __init__(self):
         self.db = Database()
         self.ai_service = AIService()
-    
-    def register_user(self, phone, name, birth_date, password):
-        """Регистрация нового пользователя"""
+
+    def handle_message(self, message):
+        """Обработка сообщения от пользователя"""
         try:
-            user_id = self.db.create_user(phone, name, birth_date, password)
-            return {
-                'success': True,
-                'message': 'Регистрация прошла успешно!',
-                'user_id': user_id
-            }
-        except ValueError as e:
-            return {
-                'success': False,
-                'message': str(e)
-            }
-        except Exception as e:
-            logger.error(f"Register user error: {str(e)}")
-            return {
-                'success': False,
-                'message': 'Внутренняя ошибка сервера'
-            }
-    
-    def login_user(self, phone, password):
-        """Вход пользователя"""
-        try:
-            user = self.db.get_user_by_phone(phone)
+            telegram_id = str(message.from_user.id)
+            user_message = message.text
             
-            if user and user['password'] == password:
-                return {
-                    'success': True,
-                    'message': 'Вход выполнен успешно!',
-                    'user': {
-                        'id': user['id'],
-                        'name': user['name'],
-                        'phone': user['phone'],
-                        'birth_date': user['birth_date']
-                    }
-                }
-            else:
-                return {
-                    'success': False,
-                    'message': 'Неверный номер телефона или пароль'
-                }
-        except Exception as e:
-            logger.error(f"Login user error: {str(e)}")
-            return {
-                'success': False,
-                'message': 'Внутренняя ошибка сервера'
-            }
-    
-    def send_message(self, user_data, message):
-        """Отправка сообщения и получение ответа от AI"""
-        try:
-            user = self.db.get_user_by_phone(user_data['phone'])
+            if not user_message or user_message.strip() == '':
+                return "Пожалуйста, опишите свой сон."
+            
+            # Получаем или создаем пользователя
+            user = self.db.get_user_by_telegram_id(telegram_id)
             if not user:
-                return {'success': False, 'error': 'Пользователь не найден'}
+                user_name = f"{message.from_user.first_name or ''} {message.from_user.last_name or ''}".strip()
+                if not user_name:
+                    user_name = "Пользователь"
+                user_id = self.db.create_telegram_user(telegram_id, user_name)
+                user = self.db.get_user_by_telegram_id(telegram_id)
+            
+            if not user:
+                return "Ошибка создания пользователя."
             
             # Получаем или создаем чат
-            chat_id = self.db.get_or_create_chat(user['id'], 'web')
+            chat_id = self.db.get_or_create_chat(user['id'], message.chat.id)
             
             # Сохраняем сообщение пользователя
-            self.db.save_message(chat_id, 'user', message)
+            self.db.save_message(chat_id, 'user', user_message)
             
             # Получаем историю чата
-            chat_history = self.db.get_chat_history(chat_id, limit=6)
-            
-            logger.info(f"Chat history for user {user['name']}: {len(chat_history)} messages")
+            chat_history = self.db.get_chat_history(chat_id, limit=4)
             
             # Получаем ответ от AI
-            ai_response = self.ai_service.get_ai_response(message, user, chat_history)
+            ai_response = self.ai_service.get_ai_response(user_message, user, chat_history)
             
             # Сохраняем ответ AI
             self.db.save_message(chat_id, 'assistant', ai_response)
             
-            return {
-                'success': True,
-                'response': ai_response
-            }
+            return ai_response
+            
         except Exception as e:
-            logger.error(f"Send message error: {str(e)}")
-            return {
-                'success': False,
-                'message': 'Извините, произошла ошибка. Пожалуйста, попробуйте еще раз.'
-            }
+            logger.error(f"Telegram bot error: {str(e)}")
+            return "Извините, произошла ошибка. Пожалуйста, попробуйте еще раз."
+
+# Создаем обработчик
+bot_handler = TelegramBotHandler()
+
+@bot.message_handler(commands=['start', 'help'])
+def send_welcome(message):
+    welcome_text = """👋 Привет! Я ИИ-сонник. 
+
+Просто опишите свой сон, и я помогу вам понять его значение с психологической точки зрения.
+
+Пример: "Мне приснилось, что я летаю над городом..." """
     
-    def get_chat_history(self, user_data):
-        """Получение истории чата"""
-        try:
-            user = self.db.get_user_by_phone(user_data['phone'])
-            if not user:
-                return {'success': False, 'error': 'Пользователь не найден'}
-            
-            chat_id = self.db.get_or_create_chat(user['id'], 'web')
-            history = self.db.get_chat_history(chat_id, limit=20)
-            
-            return {'success': True, 'history': history}
-        except Exception as e:
-            logger.error(f"Get chat history error: {str(e)}")
-            return {'success': False, 'history': []}
+    bot.reply_to(message, welcome_text)
 
-# Глобальный экземпляр API
-backend_api = BackendAPI()
-
-def main():
-    if len(sys.argv) > 1:
-        try:
-            args = json.loads(sys.argv[1])
-            action = args.get('action')
-            
-            if action == 'register':
-                result = backend_api.register_user(
-                    args['phone'], 
-                    args['name'], 
-                    args['birth_date'], 
-                    args['password']
-                )
-            elif action == 'login':
-                result = backend_api.login_user(args['phone'], args['password'])
-            elif action == 'send_message':
-                result = backend_api.send_message(args['user_data'], args['message'])
-            elif action == 'get_chat_history':
-                result = backend_api.get_chat_history(args['user_data'])
-            else:
-                result = {'success': False, 'error': 'Unknown action'}
-            
-            # Выводим только JSON
-            result_json = json.dumps(result, ensure_ascii=False, separators=(',', ':'))
-            print(result_json)
-            
-        except Exception as e:
-            logger.error(f"Main execution error: {str(e)}")
-            error_result = {
-                'success': False,
-                'message': f'Error: {str(e)}'
-            }
-            error_json = json.dumps(error_result, ensure_ascii=False, separators=(',', ':'))
-            print(error_json)
+@bot.message_handler(func=lambda message: True)
+def handle_message(message):
+    response = bot_handler.handle_message(message)
+    bot.reply_to(message, response)
 
 if __name__ == '__main__':
-    main()
+    logger.info("Telegram bot started...")
+    bot.polling(none_stop=True)
