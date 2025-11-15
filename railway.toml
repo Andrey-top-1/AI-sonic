@@ -1,8 +1,9 @@
 [build]
-builder = "nixpacks"
+builder = "DOCKERFILE"
 
 [deploy]
 startCommand = "node api.js"
 
 [env]
-PORT = "3000"
+PORT = "8080"
+NODE_ENV = "production"
