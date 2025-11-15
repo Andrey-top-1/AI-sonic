@@ -7,10 +7,10 @@
     "start": "node api.js",
     "dev": "node api.js",
     "build": "echo 'No build step required'",
-    "python": "python web_app.py",
-    "telegram": "python telegram_bot.py",
-    "start:all": "concurrently \"node api.js\" \"python telegram_bot.py\"",
-    "install:py-deps": "pip install -r requirements.txt",
+    "python": "python3 web_app.py",
+    "telegram": "python3 telegram_bot.py",
+    "start:all": "concurrently \"node api.js\" \"python3 telegram_bot.py\"",
+    "install:py-deps": "pip3 install -r requirements.txt",
     "postinstall": "npm run install:py-deps"
   },
   "dependencies": {
